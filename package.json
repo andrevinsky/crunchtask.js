@@ -1,0 +1,17 @@
+{
+  "name": "AsyncTasks",
+  "version": "0.0.0",
+  "description": "A library to execute long-running tasks asynchronously",
+  "main": "asynctask.js",
+  "dependencies": {},
+  "devDependencies": {},
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "async",
+    "tasks"
+  ],
+  "author": "Andrew Revinsky",
+  "license": "BSD-2-Clause"
+}
