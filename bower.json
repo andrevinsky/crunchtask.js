@@ -21,6 +21,7 @@
   "dependencies": {
     "promise-polyfill": "~1.1.4",
     "promise-done-6.0.0": "https://www.promisejs.org/polyfills/promise-done-6.0.0.js",
-    "promise-done-6.0.0.min": "https://www.promisejs.org/polyfills/promise-done-6.0.0.min.js"
+    "promise-done-6.0.0.min": "https://www.promisejs.org/polyfills/promise-done-6.0.0.min.js",
+    "html5-boilerplate": "~4.3.0"
   }
 }

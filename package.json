@@ -1,17 +1,21 @@
 {
-  "name": "AsyncTasks",
-  "version": "0.0.0",
-  "description": "A library to execute long-running tasks asynchronously",
-  "main": "asynctask.js",
-  "dependencies": {},
-  "devDependencies": {},
+  "name": "CrunchTask",
+  "version": "0.1.0",
+  "description": "A library to allow computing of long-running tasks revised and based on an easy-to-remember usage pattern",
+  "main": "index.html",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "karma.cmd"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/AndrewRevinsky/crunchtask.js.git"
   },
   "keywords": [
-    "async",
-    "tasks"
+    "crunch",
+    "taska"
   ],
   "author": "Andrew Revinsky",
-  "license": "BSD-2-Clause"
+  "license": "BSD",
+  "readmeFilename": "README.md",
+  "gitHead": "e4ce7a448e8c64ce272bdaad649e31704b12fab9"
 }
