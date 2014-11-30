@@ -3,8 +3,6 @@
  */
 describe('TaskCruncherPresence', function(){
 
-	//beforeEach(module('phonecatApp'));
-
 	it('exists', function(){
 		expect(Task).not.toBeUndefined();
 	});

@@ -17,5 +17,8 @@
   "author": "Andrew Revinsky",
   "license": "BSD",
   "readmeFilename": "README.md",
-  "gitHead": "e4ce7a448e8c64ce272bdaad649e31704b12fab9"
+  "gitHead": "e4ce7a448e8c64ce272bdaad649e31704b12fab9",
+  "devDependencies": {
+    "karma-coffee-preprocessor": "^0.2.1"
+  }
 }

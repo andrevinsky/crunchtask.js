@@ -18,7 +18,7 @@ module.exports = function(config) {
        'bower_components/promise-polyfill/Promise.js',
        'bower_components/promise-done-6.0.0/index.js',
       'lib/*.js',
-      'test/**/*Spec.js'
+      'test/**/*Spec.*'
     ],
 
 
@@ -30,6 +30,7 @@ module.exports = function(config) {
     // preprocess matching files before serving them to the browser
     // available preprocessors: https://npmjs.org/browse/keyword/karma-preprocessor
     preprocessors: {
+      '**/*.coffee': ['coffee']
     },
 
 
@@ -63,6 +64,18 @@ module.exports = function(config) {
 
     // Continuous Integration mode
     // if true, Karma captures browsers, runs the tests and exits
-    singleRun: false
+    singleRun: false,
+
+    coffeePreprocessor: {
+      // options passed to the coffee compiler
+      options: {
+        bare: true,
+        sourceMap: false
+      },
+      // transforming the filenames
+      transformPath: function(path) {
+        return path.replace(/\.coffee$/, '.js');
+      }
+    }
   });
 };
