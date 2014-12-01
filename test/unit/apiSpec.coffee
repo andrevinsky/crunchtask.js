@@ -4,11 +4,8 @@ describe 'TaskCruncher API', ->
 
   it 'creates instances of CrunchTask class by a simple call', ->
     result = CrunchTask()
-    expect(result).not.toThrow()
-    console.log result
-    expect(result of CrunchTask).toEqual(true)
+    expect(result instanceof CrunchTask).toEqual(true)
 
   it '.. or by a `new` instantiation', ->
-    result = new CrunchTask()
-    expect(result).not.toThrow()
-    expect(result is CrunchTask).toEqual(true)
+    result = new CrunchTask
+    expect(result instanceof CrunchTask).toEqual(true)
