@@ -1,6 +1,6 @@
 #http://jasmine.github.io/edge/introduction.html
 #http://coffeescript.org/
-describe 'TaskCruncher Library', ->
+describe 'TaskCruncher Spec: ', ->
 
   it 'Expect Jasmine Version to be 2.xx', ->
     expect(jasmine.version).toMatch(/^2\./);
@@ -15,11 +15,11 @@ describe 'TaskCruncher Library', ->
         return String obj
       return classToType[Object::toString.call(obj)]
 
-  describe 'Declaration', ->
+  describe 'Declaration: ', ->
     it 'declares a type CrunchTask on the global scope', ->
       expect(CrunchTask).toBeDefined()
 
-  describe 'Instantiation', ->
+  describe 'Instantiation: ', ->
     task = null
 
     beforeEach ->
@@ -45,7 +45,7 @@ describe 'TaskCruncher Library', ->
       result = new CrunchTask(task)
       expect(result.id).not.toEqual(task.id)
 
-  describe 'API', ->
+  describe 'API: ', ->
     task = null
 
     beforeEach ->
@@ -74,7 +74,7 @@ describe 'TaskCruncher Library', ->
       expect(result instanceof Promise).toEqual(true)
 
 
-  describe 'Usage Patterns', ->
+  describe 'Usage Patterns: ', ->
     task = null
 
     beforeEach  (done) ->
@@ -112,12 +112,11 @@ describe 'TaskCruncher Library', ->
       task = new CrunchTask
       task.always(
         (arg1, arg2, arg3) ->
-          debugger;
-#          expect(arg1).toBe('empty.description')
+          expect(arg1).toBe('empty.description')
           do done)
       task.run()
 
-    xit 'can be chained', ->
+    it 'can be chained with the `then()` method creating a new task', ->
         result1 = new CrunchTask (init, body, fin)->
           return
 
@@ -128,7 +127,8 @@ describe 'TaskCruncher Library', ->
 
         expect(result3).not.toEqual(result1)
         expect(result3).not.toEqual(result2)
-        console.log result3.toString()
+        expect(result3 instanceof CrunchTask).toEqual(true)
+
 
 
 
