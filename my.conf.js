@@ -62,9 +62,11 @@ module.exports = function(config) {
     browsers: ['Chrome'],
 
 
+
     // Continuous Integration mode
     // if true, Karma captures browsers, runs the tests and exits
     singleRun: false,
+    browserNoActivityTimeout: 100000,
 
     coffeePreprocessor: {
       // options passed to the coffee compiler
