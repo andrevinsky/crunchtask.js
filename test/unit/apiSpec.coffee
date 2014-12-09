@@ -210,19 +210,18 @@ describe 'TaskCruncher Spec: ', ->
     it 'packs execution of the `body` c/back under the amount of passed ms, if possible', (done)->
 
       task = new CrunchTask((init, body, fin)->
-        count = 10000
+        count = 250
         started = 0
         init((_started) -> started = _started)
         body((resolve)->
           if (!(count--))
             resolve(new Date() - started)
-        , 100)
+        , 200)
         return
       )
 
       task.always((elapsed)->
-        console.log elapsed
-        expect(elapsed).toBeLessThan(100)
+        expect(elapsed).toBeLessThan(200)
         done()
       )
 
@@ -256,15 +255,62 @@ describe 'TaskCruncher Spec: ', ->
       )
       task.run()
 
+    it 'allows to subscribe to `onRun` handler', ->
+      spyOn(task, 'onRun').and.callThrough()
+
+      task.onRun(
+        (arg1, arg2, arg3) ->
+          return)
+
+      expect(task.onRun).toHaveBeenCalled();
+#      do done
+
+    it 'triggers `onRun` handlers when `run()` is called', (done)->
+      task.onRun(
+        (arg1, arg2, arg3) ->
+          do done)
+      task.run()
+
+    it 'allows to subscribe to completion `done` handler', ->
+      spyOn(task, 'done').and.callThrough()
+      task.done(
+        (arg1, arg2, arg3) ->
+          return)
+
+      expect(task.done).toHaveBeenCalled();
+
+    it 'always triggers `always` handlers when completion is reached', (done)->
+      task = new CrunchTask(()->)
+      task.always(
+        (arg1, arg2, arg3) ->
+          expect(arg1).toBeDefined()
+          do done
+      )
+      task.run()
+
+    it 'can be chained with the `then()` method creating a new task', ->
+        result1 = new CrunchTask (init, body, fin)->
+          return
+
+        result2 = new CrunchTask (init, body, fin)->
+          return
+
+        result3 = result1.then(result2)
+
+        expect(result3).not.toEqual(result1)
+        expect(result3).not.toEqual(result2)
+        expect(result3 instanceof CrunchTask).toEqual(true)
+
     describe 'longer asynchronous specs', ()->
       originalTimeout = null
       originalTimeout = jasmine.getEnv().defaultTimeoutInterval
-      jasmine.getEnv().defaultTimeoutInterval = 100000
-      jasmine.DEFAULT_TIMEOUT_INTERVAL = 100000
+      #      jasmine.getEnv().defaultTimeoutInterval = 100000
+      #      jasmine.DEFAULT_TIMEOUT_INTERVAL = 100000
 
       beforeEach (done) ->
         originalTimeout = jasmine.getEnv().defaultTimeoutInterval
-        jasmine.getEnv().defaultTimeoutInterval = 100000
+        #        jasmine.getEnv().defaultTimeoutInterval = 100000
+        jasmine.DEFAULT_TIMEOUT_INTERVAL = 10000
         done()
 
       afterEach () ->
@@ -302,54 +348,6 @@ describe 'TaskCruncher Spec: ', ->
           done()
         )
       )
-
-
-
-    it 'allows to subscribe to `onRun` handler', ->
-      spyOn(task, 'onRun').and.callThrough()
-
-      task.onRun(
-        (arg1, arg2, arg3) ->
-          return)
-
-      expect(task.onRun).toHaveBeenCalled();
-#      do done
-
-    it 'triggers `onRun` handlers when `run()` is called', (done)->
-      task.onRun(
-        (arg1, arg2, arg3) ->
-          do done)
-      task.run()
-
-    it 'allows to subscribe to completion `done` handler', ->
-      spyOn(task, 'done').and.callThrough()
-      task.done(
-        (arg1, arg2, arg3) ->
-          return)
-
-      expect(task.done).toHaveBeenCalled();
-
-    it 'always triggers `always` handlers when completion is reached', (done)->
-      task = new CrunchTask(()->)
-      task.always(
-        (arg1, arg2, arg3) ->
-          expect(arg1).toBeDefined()
-          do done)
-      task.run()
-
-    it 'can be chained with the `then()` method creating a new task', ->
-        result1 = new CrunchTask (init, body, fin)->
-          return
-
-        result2 = new CrunchTask (init, body, fin)->
-          return
-
-        result3 = result1.then(result2)
-
-        expect(result3).not.toEqual(result1)
-        expect(result3).not.toEqual(result2)
-        expect(result3 instanceof CrunchTask).toEqual(true)
-
 
 
 
