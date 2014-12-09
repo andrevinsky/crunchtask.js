@@ -87,12 +87,9 @@ describe 'TaskCruncher Spec: ', ->
   describe 'Usage Patterns: ', ->
     task = null
 
-    beforeEach  (done) ->
+    beforeEach () ->
       task = new CrunchTask (init, body, fin)->
         return
-
-#      setTimeout((()-> do done), 15000)
-#      done();
 
     it 'uses a simple construction function', ->
       result = new CrunchTask (init, body, fin)->
@@ -156,7 +153,7 @@ describe 'TaskCruncher Spec: ', ->
         return
       task.run(123)
 
-    xit 'uses `body` function to describe main logic and control its flow with three c/backs'
+#    xit 'uses `body` function to describe main logic and control its flow with three c/backs'
 
     it 'uses `body` to control flow with two c/backs (`resolve, reject`). Sample - resolve', (done) ->
       task = new CrunchTask (init, body, fin)->
@@ -186,6 +183,51 @@ describe 'TaskCruncher Spec: ', ->
           return)
       )
 
+    it 'executes only once, when the second parameter to the `body` callback is `false`', (done)->
+      foo = {
+        bar: (resolve, reject) ->
+      }
+
+      setTimeout(done, 5000)
+
+      spyOn(foo, 'bar').and.callThrough()
+
+      task = new CrunchTask((init, body, fin)->
+        body(foo.bar, false)
+        fin(done)
+        return
+      )
+
+      task.always(()->
+        expect(foo.bar.calls.any()).toEqual(true)
+        expect(foo.bar.calls.count()).toEqual(1)
+        done()
+      )
+
+      expect(foo.bar.calls.any()).toEqual(false)
+      task.run()
+
+    it 'packs execution of the `body` c/back under the amount of passed ms, if possible', (done)->
+
+      task = new CrunchTask((init, body, fin)->
+        count = 10000
+        started = 0
+        init((_started) -> started = _started)
+        body((resolve)->
+          if (!(count--))
+            resolve(new Date() - started)
+        , 100)
+        return
+      )
+
+      task.always((elapsed)->
+        console.log elapsed
+        expect(elapsed).toBeLessThan(100)
+        done()
+      )
+
+      task.run(new Date() - 0)
+
     it 'wraps all arguments into an array for Promise endpoints, unwraps for own handlers. Sample - resolve', (done) ->
       task = new CrunchTask (init, body, fin)->
         body((resolve, reject, notify)->
@@ -214,23 +256,32 @@ describe 'TaskCruncher Spec: ', ->
       )
       task.run()
 
-    ddescribe 'longer asynchronous specs', ()->
+    describe 'longer asynchronous specs', ()->
       originalTimeout = null
-      beforeEach  (done) ->
-        originalTimeout = jasmine.DEFAULT_TIMEOUT_INTERVAL;
-        jasmine.DEFAULT_TIMEOUT_INTERVAL = 10000;
+      originalTimeout = jasmine.getEnv().defaultTimeoutInterval
+      jasmine.getEnv().defaultTimeoutInterval = 100000
+      jasmine.DEFAULT_TIMEOUT_INTERVAL = 100000
+
+      beforeEach (done) ->
+        originalTimeout = jasmine.getEnv().defaultTimeoutInterval
+        jasmine.getEnv().defaultTimeoutInterval = 100000
+        done()
+
+      afterEach () ->
+        jasmine.DEFAULT_TIMEOUT_INTERVAL = originalTimeout
+        jasmine.getEnv().defaultTimeoutInterval = originalTimeout
 
       it 'uses `body`/`notify` c/back to notify listeners of the progress of the task', ((done) ->
         foo = {
           bar: (() ->
-            console.log (new Date() - 0)
           )
         }
-        console.log(jasmine.DEFAULT_TIMEOUT_INTERVAL)
         spyOn(foo, 'bar').and.callThrough();
 
+        runCycles = 3
+
         task = new CrunchTask (init, body, fin)->
-          count = 10
+          count = runCycles
           body((resolve, reject, notify)->
             notify('const', count--)
             if !count
@@ -241,19 +292,17 @@ describe 'TaskCruncher Spec: ', ->
         task.progress(foo.bar)
 
         expect(foo.bar.calls.any()).toEqual(false)
-
         task.run()
 
         task.always(()->
-          debugger;
           expect(foo.bar.calls.any()).toEqual(true)
-          expect(foo.bar.calls.count()).toEqual(10)
+          expect(foo.bar.calls.count()).toEqual(runCycles)
+          expect(foo.bar.calls.argsFor(0)).toEqual(['const', runCycles])
+          expect(foo.bar.calls.argsFor(runCycles - 1)).toEqual(['const', 1])
           done()
         )
       )
 
-      afterEach  () ->
-        jasmine.DEFAULT_TIMEOUT_INTERVAL = originalTimeout;
 
 
     it 'allows to subscribe to `onRun` handler', ->
