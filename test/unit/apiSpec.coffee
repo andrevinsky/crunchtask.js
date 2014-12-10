@@ -95,6 +95,26 @@ describe 'TaskCruncher Spec: ', ->
       expect(result).toBeDefined()
       expect(result instanceof Promise).toEqual(true)
 
+    it 'rejects the run when no `body` is supplied', (done)->
+      foo = {
+        bar: ->
+      }
+
+      spyOn(foo, 'bar').and.callThrough()
+
+      task = new CrunchTask (init, body, fin)->
+
+      task.fail foo.bar
+
+      expect(foo.bar.calls.any()).toEqual(false)
+      task.run()
+
+      window.setTimeout(() ->
+          expect(foo.bar.calls.any()).toEqual(true)
+          expect(foo.bar.calls.argsFor(0)[0] instanceof Error).toEqual(true);
+          done()
+      ,1000)
+
 
     describe 'the `promise` obtained by `run` has three extra methods:', ()->
       runResult = null
@@ -257,26 +277,52 @@ describe 'TaskCruncher Spec: ', ->
       }
       spyOn(foo, 'bar').and.callThrough()
 
+      batchExecWindowMilliseconds = 100
+
       task = new CrunchTask((init, body, fin)->
         count = 250
         started = 0
         init((_started) -> started = _started)
-        body((resolve, reject, notify)->
-          foo.bar(new Date() - started)
+        body((resolve, reject, notify, diag)->
+          foo.bar(diag.batchStarted)
           if (!(count--))
-            resolve(new Date() - started)
-        , 200)
+            resolve(new Date() - diag.batchStarted)
+        , batchExecWindowMilliseconds)
         return
       )
 
       task.always((elapsed)->
-        expect(elapsed).toBeGreaterThan(0)
-        #TODO: correct checking the exec break
-        expect(Math.abs(foo.bar.calls.argsFor(0)[0]-foo.bar.calls.argsFor(1)[0])).toBeLessThan(50);
+        expect(elapsed).toBeLessThan(batchExecWindowMilliseconds + 10)
+        expect(foo.bar.calls.argsFor(0)).toEqual(foo.bar.calls.argsFor(1));
         done()
       )
 
       task.run(new Date() - 0)
+
+    it 'spaces execution of the `body` c/back for the amount passed in the third parameter', (done)->
+      foo = {
+        bar: (() ->
+        )
+      }
+      spyOn(foo, 'bar').and.callThrough()
+      executionTimeout = 500
+      task = new CrunchTask((init, body, fin)->
+        count = 2
+        started = 0
+        init((_started) -> started = _started)
+        body((resolve, reject, notify, diag)->
+          foo.bar(diag.batchStarted)
+          if (!(count--))
+            resolve()
+        , 0, executionTimeout)
+        return
+      )
+      started = new Date() - 0
+      task.done ->
+        expect(Math.abs( started - foo.bar.calls.argsFor(0)[0])).toBeGreaterThan(executionTimeout - 1)
+        expect(Math.abs( foo.bar.calls.argsFor(0)[0] - foo.bar.calls.argsFor(1)[0])).toBeGreaterThan(executionTimeout - 1)
+        done()
+      task.run()
 
     it 'wraps all arguments into an array for Promise endpoints, unwraps for own handlers. Sample - resolve', (done) ->
       task = new CrunchTask (init, body, fin)->
@@ -401,31 +447,172 @@ describe 'TaskCruncher Spec: ', ->
       )
 
       it 'uses `abort` method called on `run` result to abort execution of a run-instance', (done)->
+        memo = {}
+        foo = {
+          bar: ((id) ->
+            memo[id] = (memo[id] || 0) + 1
+          )
+        }
+        spyOn(foo, 'bar').and.callThrough();
+
+        timeoutAmount = 100
+        safetyMargin = Math.floor(timeoutAmount / 2)
+
+        task = new CrunchTask (init, body, fin)->
+          id = null
+          init (_id)->
+            id = _id
+          body ->
+            foo.bar(id)
+          ,0, timeoutAmount
+
+        task.always ->
+          expect(foo.bar.calls.any()).toEqual(true)
+
+        expect(foo.bar.calls.any()).toEqual(false)
+
+        result1 = task.run(1)
+        result2 = task.run(2)
+
+        setTimeout ->
+          expect(foo.bar.calls.count()).toEqual(2)
+          expect(memo[1]).toEqual(1)
+          expect(memo[2]).toEqual(1)
+          result1.abort()
+        , timeoutAmount + safetyMargin
+
+        setTimeout ->
+          expect(foo.bar.calls.count()).toEqual(3)
+          expect(memo[1]).toEqual(1)
+          expect(memo[2]).toEqual(2)
+          result1.resume()
+        , 2 * timeoutAmount + safetyMargin
+
+        setTimeout ->
+          expect(foo.bar.calls.count()).toEqual(4)
+          expect(memo[1]).toEqual(1)
+          expect(memo[2]).toEqual(3)
+          task.abort()
+        , 3 * timeoutAmount + safetyMargin
+
+        setTimeout ->
+          done()
+        , 4 * timeoutAmount + safetyMargin
+
+
+      it 'uses `abort` method called on task to abort execution of all run-instances', (done)->
+        moo = {
+          id: 1,
+          bar: () ->
+        }
+        spyOn(moo, 'bar').and.callThrough()
+
+        task = new CrunchTask (init, body, fin)->
+          body moo.bar
+
+        expect(moo.bar.calls.any()).toEqual(false)
+
+        task.always ()->
+          # called twice !
+          expect(moo.bar.calls.any()).toEqual(false)
+
+        result1 = task.run();
+        result2 = task.run();
+        task.abort()
+
+        window.setTimeout done, 100
+
+
+      it 'uses `pause`/`resume` method pair called on `run` result to pause/resume the execution of a single thread', (done)->
+        memo = {}
+        foo = {
+          bar: ((id) ->
+            memo[id] = (memo[id] || 0) + 1
+          )
+        }
+        spyOn(foo, 'bar').and.callThrough()
+
+        timeoutAmount = 100
+        safetyMargin = Math.floor(timeoutAmount / 2)
+
+        task = new CrunchTask (init, body, fin)->
+          id = null
+          init (_id)->
+            id = _id
+          body ->
+            foo.bar(id)
+          ,0, timeoutAmount
+
+        task.always ->
+          expect(foo.bar.calls.any()).toEqual(true)
+
+        expect(foo.bar.calls.any()).toEqual(false)
+
+        result1 = task.run(1)
+        result2 = task.run(2)
+
+        setTimeout ->
+          expect(foo.bar.calls.count()).toEqual(2)
+          expect(memo[1]).toEqual(1)
+          expect(memo[2]).toEqual(1)
+          result1.pause()
+        , timeoutAmount + safetyMargin
+
+        setTimeout ->
+          expect(foo.bar.calls.count()).toEqual(3)
+          expect(memo[1]).toEqual(1)
+          expect(memo[2]).toEqual(2)
+          result1.resume()
+        , 2 * timeoutAmount + safetyMargin
+
+        setTimeout ->
+          expect(foo.bar.calls.count()).toEqual(5)
+          expect(memo[1]).toEqual(2)
+          expect(memo[2]).toEqual(3)
+          task.abort()
+        , 3 * timeoutAmount + safetyMargin
+
+        setTimeout ->
+          done()
+        , 4 * timeoutAmount + safetyMargin
+
+
+      it 'uses `pause`/`resume` method pair called on task to pause/resume the execution of  all run-instances', (done)->
         foo = {
           bar: (() ->
           )
         }
-        spyOn(foo, 'bar').and.callThrough();
+        spyOn(foo, 'bar').and.callThrough()
+
+        timeoutAmount = 100
+        safetyMargin = Math.floor(timeoutAmount / 2)
+
         task = new CrunchTask (init, body, fin)->
-          body(foo.bar)
+          body foo.bar, 0, timeoutAmount
 
         expect(foo.bar.calls.any()).toEqual(false)
 
         task.always ()->
-          debugger;
-          expect(foo.bar.calls.any()).toEqual(false)
+          expect(foo.bar.calls.any()).toEqual(true)
+
+        result1 = task.run()
+        result2 = task.run()
+
+        setTimeout ->
+          expect(foo.bar.calls.count()).toEqual(2 * 1)
+          task.pause()
+        , timeoutAmount + safetyMargin
+
+        setTimeout ->
+          expect(foo.bar.calls.count()).toEqual(2 * 1)
+          task.resume()
+        , 2 * timeoutAmount + safetyMargin
+
+        setTimeout ->
+          expect(foo.bar.calls.count()).toEqual(2 * 2)
+          task.abort()
+        , 3 * timeoutAmount + safetyMargin
+
+        setTimeout ->
           done()
-
-        runResult = task.run(task.id)
-        runResult.abort()
-
-      it 'uses `abort` method called on task to abort execution of all run-instances', ()->
-        expect(true).toBeTruthy()
-
-      it 'uses `pause`/`resume` method pair called on `run` result to pause/resume the execution of a single thread', ()->
-        expect(true).toBeTruthy()
-
-      it 'uses `pause`/`resume` method pair called on task to pause/resume the execution of  all run-instances', ()->
-        expect(true).toBeTruthy()
-
-
+        , 4 * timeoutAmount + safetyMargin
