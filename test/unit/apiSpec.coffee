@@ -77,11 +77,48 @@ describe 'TaskCruncher Spec: ', ->
       expect(task.progress).toBeDefined()
       expect(type(task.progress)).toEqual('function')
 
+    it 'declares `abort` method', ->
+      expect(task.abort).toBeDefined()
+      expect(type(task.abort)).toEqual('function')
+
+    it 'declares `pause` method', ->
+      expect(task.pause).toBeDefined()
+      expect(type(task.pause)).toEqual('function')
+
+    it 'declares `resume` method', ->
+      expect(task.resume).toBeDefined()
+      expect(type(task.resume)).toEqual('function')
+
     it 'returns promise object when `run` is called', ->
       result = task.run()
 
       expect(result).toBeDefined()
       expect(result instanceof Promise).toEqual(true)
+
+
+    describe 'the `promise` obtained by `run` has three extra methods:', ()->
+      runResult = null
+
+      beforeEach(()->
+        runResult = task.run()
+      )
+
+      afterEach(()->
+        runResult = null
+      )
+
+      it 'declares `abort` method', ()->
+        expect(runResult.abort).toBeDefined()
+        expect(type(runResult.abort)).toEqual('function')
+
+      it 'declares `pause` method', ()->
+        expect(runResult.pause).toBeDefined()
+        expect(type(runResult.pause)).toEqual('function')
+
+      it 'declares `resume` method', ()->
+        expect(runResult.resume).toBeDefined()
+        expect(type(runResult.resume)).toEqual('function')
+
 
 
   describe 'Usage Patterns: ', ->
@@ -124,6 +161,8 @@ describe 'TaskCruncher Spec: ', ->
           expect(arg1).toEqual(123)
           done()
         )
+        body(()->
+          throw new Error('stop'))
         return
       result.run(123)
 
@@ -136,6 +175,8 @@ describe 'TaskCruncher Spec: ', ->
           expect(arg2).toEqual('456')
           done()
         )
+        body(()->
+          throw new Error('stop'))
         return
       result.run(123, '456')
 
@@ -149,6 +190,7 @@ describe 'TaskCruncher Spec: ', ->
           expect(result).toBeDefined()
           expect(result).toEqual(123)
           done()
+          throw new Error('stop')
         )
         return
       task.run(123)
@@ -209,11 +251,18 @@ describe 'TaskCruncher Spec: ', ->
 
     it 'packs execution of the `body` c/back under the amount of passed ms, if possible', (done)->
 
+      foo = {
+        bar: (() ->
+        )
+      }
+      spyOn(foo, 'bar').and.callThrough()
+
       task = new CrunchTask((init, body, fin)->
         count = 250
         started = 0
         init((_started) -> started = _started)
-        body((resolve)->
+        body((resolve, reject, notify)->
+          foo.bar(new Date() - started)
           if (!(count--))
             resolve(new Date() - started)
         , 200)
@@ -221,7 +270,9 @@ describe 'TaskCruncher Spec: ', ->
       )
 
       task.always((elapsed)->
-        expect(elapsed).toBeLessThan(200)
+        expect(elapsed).toBeGreaterThan(0)
+        #TODO: correct checking the exec break
+        expect(Math.abs(foo.bar.calls.argsFor(0)[0]-foo.bar.calls.argsFor(1)[0])).toBeLessThan(50);
         done()
       )
 
@@ -301,7 +352,7 @@ describe 'TaskCruncher Spec: ', ->
         expect(result3).not.toEqual(result2)
         expect(result3 instanceof CrunchTask).toEqual(true)
 
-    describe 'longer asynchronous specs', ()->
+    describe 'close-to-real usage examples', ()->
       originalTimeout = null
       originalTimeout = jasmine.getEnv().defaultTimeoutInterval
       #      jasmine.getEnv().defaultTimeoutInterval = 100000
@@ -349,9 +400,32 @@ describe 'TaskCruncher Spec: ', ->
         )
       )
 
+      it 'uses `abort` method called on `run` result to abort execution of a run-instance', (done)->
+        foo = {
+          bar: (() ->
+          )
+        }
+        spyOn(foo, 'bar').and.callThrough();
+        task = new CrunchTask (init, body, fin)->
+          body(foo.bar)
 
+        expect(foo.bar.calls.any()).toEqual(false)
 
+        task.always ()->
+          debugger;
+          expect(foo.bar.calls.any()).toEqual(false)
+          done()
 
+        runResult = task.run(task.id)
+        runResult.abort()
 
+      it 'uses `abort` method called on task to abort execution of all run-instances', ()->
+        expect(true).toBeTruthy()
+
+      it 'uses `pause`/`resume` method pair called on `run` result to pause/resume the execution of a single thread', ()->
+        expect(true).toBeTruthy()
+
+      it 'uses `pause`/`resume` method pair called on task to pause/resume the execution of  all run-instances', ()->
+        expect(true).toBeTruthy()
 
 
