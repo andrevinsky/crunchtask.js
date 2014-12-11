@@ -12,13 +12,13 @@ ChrunchTask.js can be used as a part ..
 
 ..
 
-## Example A. Simple
+## Usage Example
 
 
 ```javascript
 var mandelbrot = new ChrunchTask(function(init, body, fin){
 
-  var xR, xI, cR, cI, zR, zI, maxIter;
+  var xR, xI, cR, cI, zR, zI, maxIter, count = 0;
 
   init(function(_xR, _xI, _cR, _cI, _maxIter){
     zR = xR = _xR; zI = xI = _xI;
@@ -26,24 +26,35 @@ var mandelbrot = new ChrunchTask(function(init, body, fin){
     maxIter = _maxIter || 10000;
   });
 
-
   body(function(resolve, reject){
     var zR = zR * cR - zI * cI;
     var zI = zR * cI + zI * cR;
-    var isInside = Math.sqrt(zR * zR + zI * zI);
-    maxIter--;
-
+    var isInside = Math.sqrt(zR * zR + zI * zI) < 2.0;
+    count++;
+    if (maxIter-- && isInside) return;
+    if (isInside) {
+      resolve (xR, xI);
+    } else {
+      reject (xR, xI, count);
+    }
   });
 
 
+  fin(function(status){
+    if (status === true) {
+      
+    } else {}
+  });
 
 });
 ```
 
 
-## Example B. Fully exploited
+## How did we come to this?
 
 ```javascript
+
+
 ```
 
 ```javascript
