@@ -29,11 +29,7 @@ var collatzTask = new CrunchTask(function(init, body, fin){
   body(function(resolve, reject){
     if (n === 1) return resolve(nInit, totalStoppingTime);
     if (n > threshold) return reject(nInit, threshold, n);
-    if (n % 2) {
-      n = 3 * n + 1;
-    } else {
-      n = n / 2;
-    }
+    n = ((n % 2) ? 3 * n + 1 : n / 2);
     totalStoppingTime++;
   }, 100);
 
@@ -60,6 +56,8 @@ Refer towards the end of the spec file for the working example.
 
 ### Description function
 
+*Instantiation.* `new ChrunchTask(fn)`, `fn` is a required function that takes three parameters: `function(init, body, fin)`
+
 At first, we need to create an instance of a `ChrunchTask` with a function, passed as the only parameter, to the `new CrunchTask`. This function is called a _description function_. Without it, a task cannot be said to be described, thus has no meaning at all. A _description function_ takes three parameters, `init`, `body`, and `fin`:
 
 ```javascript
@@ -85,6 +83,8 @@ var runInstance2 = task.run(-1, 1);
 ```
 
 ### Initialization setup function and Init function
+
+*Local variables intitialization.* `init(fn)`, a call to `init` inside a _description function_ is optional. `fn` is optional, and is a function that takes variable number of arguments: `function(arg0, arg1, arg2,..)` - initialization values passed from `task.run(arg0, arg1, arg2,..)`.
 
 How do the arguments get inside the task? With the help of a function passed as a parameter to `init`, _initialization setup_ function. We will call it an _init function_ now on. That's the only parameter passed to the _initialization setup_.
 
@@ -113,6 +113,11 @@ How did we know that the `init` function would take two arguments? But it is us 
 Unlike for those implementations that pass around a sort of a state-carrying object, our approach localizes the values once and treats them as local.
 
 ### Body setup function
+
+*Algorithm description setup.* `body(fn, timeLimit, timeout)`; a call to `body` inside a _description function_ is required.
+`fn` is required, and is a function that takes 3 arguments: `function(resolve, reject, notify)` - implements the logic, signals of its completion/failure/progress by calling `resolve(..)`, `reject(..)`, and `notify(..)`.
+`timeLimit`, Number of `false`, optional, default is 0; is a time limit, in ms, for a number of consecutive iterations allowed to take before re-queueing the rest. `false` tells the `fn` to get executed only once.
+`timeout`, Number, optional, default is 0; is a timeout amount after which the next queued execution starts.
 
 What use is it if we only receive the values and do nothing about them? Right. Heading forth, to the second parameter passed to the _description function_ as a `body` parameter that we called _body setup_ function.
 It takes three arguments: one required, and two optional.
@@ -148,11 +153,7 @@ var collatzTask = new CrunchTask(function(init, body, fin){
   body(function(resolve, reject){
     if (n === 1) return resolve(nInit, totalStoppingTime);
     if (n > threshold) return reject(nInit, threshold, n);
-    if (n % 2) {
-      n = 3 * n + 1;
-    } else {
-      n = n / 2;
-    }
+    n = ((n % 2) ? 3 * n + 1 : n / 2);
     totalStoppingTime++;
   });
 
@@ -164,7 +165,7 @@ var collatzTask = new CrunchTask(function(init, body, fin){
 
 #### Consecutive execution time limit
 
-*Second parameter to a _body setup_, `Number` or `false`*
+*Second parameter to a _body setup_, optional, `Number` or `false`, default: 0*
 
 With no additional parameters to the _body setup_, each consecutive call to a _body function_ will be queued after execution of the previous one with the help of setTimeout(fn, 0). But sometimes you can execute a number of iteration before the browser becomes unresponsive, or even, lagging becomes noticeable. So we can specify - with a second parameter passed to a _body setup_ - a time limit for consecutive iterations before starting breaking the process with the setTimeout. In the initial example, it is 100:
 
@@ -175,11 +176,7 @@ With no additional parameters to the _body setup_, each consecutive call to a _b
   body(function(resolve, reject){
     if (n === 1) return resolve(nInit, totalStoppingTime);
     if (n > threshold) return reject(nInit, threshold, n);
-    if (n % 2) {
-      n = 3 * n + 1;
-    } else {
-      n = n / 2;
-    }
+    n = ((n % 2) ? 3 * n + 1 : n / 2);
     totalStoppingTime++;
   }, 100);
 
@@ -187,6 +184,12 @@ With no additional parameters to the _body setup_, each consecutive call to a _b
 ```
 
 If you need the _body function_ to run only once, and never to queue up again, explicitly pass `false` as a second parameter to _body setup_.
+
+#### Timeout amount
+
+*Third parameter to a _body setup_, optional, `Number`, default: 0*
+
+
 
 
 ```javascript
