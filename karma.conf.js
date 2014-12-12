@@ -68,6 +68,15 @@ module.exports = function(config) {
     singleRun: false,
     browserNoActivityTimeout: 100000,
 
+    //plugins : [
+    //  //'karma-junit-reporter',
+    //  'karma-chrome-launcher',
+    //  //'karma-firefox-launcher',
+    //  //'karma-opera-launcher',
+    //  //'karma-ie-launcher',
+    //  'karma-jasmine'
+    //],
+
     coffeePreprocessor: {
       // options passed to the coffee compiler
       options: {
