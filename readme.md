@@ -73,7 +73,7 @@ var collatzTask = new ChrunchTask(function(init, body, fin){
 
 This _description function_ provides the means for the task to receive parameters at the beginning of its execution, process them, and, optionally, do something in the end, after the execution has finished. It will get called once the `run()` method of the task is executed.
 
-During run-time the _description function_ receives three parameters, three functions, `init`, `body`, and `fin`, called _initialization setup_, _body setup_, and _finally, or cleanup, setup_ respectively.
+During run-time the _description function_ receives three parameters, three functions, `init`, `body`, and `fin`, called _initialization setup_, _body setup_, and _finalization setup_ respectively.
 
 Once the task is properly set up, we can do the processing as many times as we want with its `run()` method, to which we pass the values we need processing performed on:
 
@@ -194,15 +194,39 @@ If you need the _body function_ to run only once, and never to queue up again, e
 Lorem ipsum
 
 
+### Finalization setup
+
+**Finalization setup.** `fin(fn)`; a call to `fin` inside a _description function_ is optional.
+`fn` is optional, and is a function that takes 1 parameter: `function(status)` - implements the logic that is supposed to take place _after_ the computation is complete, e.g. values checking, debugging, console output, etc. The `status` can be of values: `true` (resolved), `false` (rejected), and a string `'aborted'`.
+
+Lorem ipsum
+
+```javascript
+//...
+
+  fin(function(status){
+    if (status === false)
+      console.log('Collatz conjecture breaking candidate:', nInit);
+  });
+
+//...
+```
+
+
+## API
+
+### Instantiation
+
+### Task object
+
+### Run-task object
+
+
 ```javascript
 ```
 
 
-```javascript
-```
-
-
-**Mandelbrot**
+**Mandelbrot sample**
 
 ```javascript
 var mandelbrot = new ChrunchTask(function(init, body, fin){
