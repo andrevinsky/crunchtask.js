@@ -124,11 +124,11 @@ We can call it a _body function_.
 
 The first parameter a _body setup_ function accepts is called a _body function_. The logic of your iterating task is supposed to be there because it is this function that is going to be called over and over again until a Promise associated with this process is either resolved or rejected. This function is supposed to make use of the variables declared in the _description function_ and assigned later when the _init function_ is called.
 
-The _body function_ accepts three arguments. In a manner that Promise's constructor function accepts `resolve` and `reject` parameters - functions by which a promise is resolvd or rejected (TODO: a link here please), the _body function_ does so three: `resolve`, `reject`, and `notify`.
+The _body function_ accepts three arguments. In a manner that Promise's constructor function accepts `resolve` and `reject` parameters - functions by which a promise is resolved or rejected (TODO: a link here please), the _body function_ does so three: `resolve`, `reject`, and `notify`.
 
 If a logic finds the results of the iteration satisfactory, i.e. the goal is reached, it calls the `resolve` function with as many arguments to pass as it sees fit. (Note, it is unlike the `resolve` of a Promise, where there can be only one parameter.)
 
-If a logic finds the state of things to never reach the goal, it calles the 'reject' function with the desirable number of parameters. (Note, same difference here.)
+If a logic finds the state of things to never reach the goal, it calls the 'reject' function with the desirable number of parameters. (Note, same difference here.)
 
 If a logic wants to update the calling party of its state (for the purpose of animation or progress tracking) it can use a `notify` function.
 
