@@ -277,27 +277,32 @@ describe 'TaskCruncher Spec: ', ->
       }
       spyOn(foo, 'bar').and.callThrough()
 
-      batchExecWindowMilliseconds = 100
+      batchExecTimeLimitMilliseconds = 100
 
       task = new CrunchTask((init, body, fin)->
         count = 250
         started = 0
         init((_started) -> started = _started)
         body((resolve, reject, notify, diag)->
-          foo.bar(diag.batchStarted)
-          if (!(count--))
-            resolve(new Date() - diag.batchStarted)
-        , batchExecWindowMilliseconds)
+          foo.bar(diag.batchStarted - 0, diag.batchIndex, diag.batchElapsed)
+          if (!(--count))
+            resolve()
+
+        , batchExecTimeLimitMilliseconds)
         return
       )
 
-      task.always((elapsed)->
-        expect(elapsed).toBeLessThan(batchExecWindowMilliseconds + 10)
-        expect(foo.bar.calls.argsFor(0)).toEqual(foo.bar.calls.argsFor(1));
+      task.always(()->
+        expect(foo.bar.calls.count()).toEqual(250);
+        for i in [0...foo.bar.calls.count()]
+          expect(foo.bar.calls.argsFor(i)[2]).toBeLessThan(batchExecTimeLimitMilliseconds)
+        for i in [1...foo.bar.calls.count()]
+          expect(foo.bar.calls.argsFor(i)[0]).toEqual(foo.bar.calls.argsFor(i - 1)[0]) if foo.bar.calls.argsFor(i)[1] > foo.bar.calls.argsFor(i - 1)[1]
+
         done()
       )
 
-      task.run(new Date() - 0)
+      task.run((new Date() - 0))
 
     it 'spaces execution of the `body` c/back for the amount passed in the third parameter', (done)->
       foo = {
@@ -377,7 +382,7 @@ describe 'TaskCruncher Spec: ', ->
       expect(task.done).toHaveBeenCalled();
 
     it 'always triggers `always` handlers when completion is reached', (done)->
-      task = new CrunchTask(()->)
+      task = new CrunchTask ( -> )
       task.always(
         (arg1, arg2, arg3) ->
           expect(arg1).toBeDefined()
@@ -398,21 +403,21 @@ describe 'TaskCruncher Spec: ', ->
         expect(result3).not.toEqual(result2)
         expect(result3 instanceof CrunchTask).toEqual(true)
 
-    describe 'close-to-real usage examples', ()->
+    describe 'close-to-real usage examples', ->
       originalTimeout = null
-      originalTimeout = jasmine.getEnv().defaultTimeoutInterval
+      originalTimeout = jasmine.getEnv().defaultTimeoutInterval || jasmine.DEFAULT_TIMEOUT_INTERVAL
       #      jasmine.getEnv().defaultTimeoutInterval = 100000
       #      jasmine.DEFAULT_TIMEOUT_INTERVAL = 100000
 
       beforeEach (done) ->
-        originalTimeout = jasmine.getEnv().defaultTimeoutInterval
+        originalTimeout = jasmine.getEnv().defaultTimeoutInterval || jasmine.DEFAULT_TIMEOUT_INTERVAL
         #        jasmine.getEnv().defaultTimeoutInterval = 100000
         jasmine.DEFAULT_TIMEOUT_INTERVAL = 10000
         done()
 
       afterEach () ->
-        jasmine.DEFAULT_TIMEOUT_INTERVAL = originalTimeout
         jasmine.getEnv().defaultTimeoutInterval = originalTimeout
+        jasmine.DEFAULT_TIMEOUT_INTERVAL = originalTimeout
 
       it 'uses `body`/`notify` c/back to notify listeners of the progress of the task', ((done) ->
         foo = {
@@ -552,6 +557,7 @@ describe 'TaskCruncher Spec: ', ->
         result2 = task.run(2)
 
         setTimeout ->
+          console.log 'after ' + timeoutAmount + 'ms'
           expect(foo.bar.calls.count()).toEqual(2)
           expect(memo[1]).toEqual(1)
           expect(memo[2]).toEqual(1)
@@ -559,6 +565,7 @@ describe 'TaskCruncher Spec: ', ->
         , timeoutAmount + safetyMargin
 
         setTimeout ->
+          console.log 'after ' + 2 * timeoutAmount + 'ms'
           expect(foo.bar.calls.count()).toEqual(3)
           expect(memo[1]).toEqual(1)
           expect(memo[2]).toEqual(2)
@@ -566,6 +573,7 @@ describe 'TaskCruncher Spec: ', ->
         , 2 * timeoutAmount + safetyMargin
 
         setTimeout ->
+          console.log 'after ' + 3 * timeoutAmount + 'ms'
           expect(foo.bar.calls.count()).toEqual(5)
           expect(memo[1]).toEqual(2)
           expect(memo[2]).toEqual(3)
@@ -616,3 +624,65 @@ describe 'TaskCruncher Spec: ', ->
         setTimeout ->
           done()
         , 4 * timeoutAmount + safetyMargin
+
+    describe 'Examples in the readme.md file', ->
+      collatzTask = null
+      beforeEach( ->
+        collatzTask = new CrunchTask (init, body, fin) ->
+          nInit = n = threshold = null
+          totalStoppingTime = 0
+
+          init (_n, _threshold)->
+            nInit = n = _n
+            threshold = _threshold
+
+          body (resolve, reject)->
+            return resolve(nInit, totalStoppingTime) if n is 1
+            return reject(nInit, threshold, n) if n > threshold
+            if (n % 2)
+              n = 3 * n + 1
+            else
+              n = n / 2
+            totalStoppingTime++
+          , 100
+
+          fin (status)->
+            if status is false
+              console.log 'Collatz conjecture breaking candidate:', nInit
+      )
+
+      it 'implements a Collatz conjecture, aka 3n + 1 problem, algorithm', (ddone)->
+        tasksRunning = 0
+#        start = new Date() - 0;
+        collatzTask.onRun ->
+          tasksRunning++
+        collatzTask.always ->
+          tasksRunning--
+          if tasksRunning is 0
+#            console.log(new Date() - start)
+            setTimeout ddone, 100
+
+        collatzTask.run(1).done (arr)->
+          [n, count] = arr
+          expect(n).toEqual(1)
+          expect(count).toEqual(0)
+
+        collatzTask.run(6).done (arr)->
+          [n, count] = arr
+          expect(n).toEqual(6)
+          expect(count).toEqual(8)
+
+        collatzTask.run(63728127).done (arr)->
+          [n, count] = arr
+          expect(n).toEqual(63728127)
+          expect(count).toEqual(949)
+
+        for v, k in [0, 1, 7, 2, 5, 8, 16, 3, 19, 6, 14, 9, 9, 17, 17, 4, 12, 20, 20, 7, 7, 15, 15, 10, 23, 10, 111, 18, 18, 18, 106, 5, 26, 13, 13, 21, 21, 21, 34, 8, 109, 8, 29, 16, 16, 16, 104, 11, 24, 24]
+          ((v, k) ->
+            collatzTask.run(k + 1).done (arr)->
+              [n, count] = arr
+#              console.log(arr)
+              expect(n).toEqual(k + 1)
+              expect(count).toEqual(v)
+          )(v, k)
+
