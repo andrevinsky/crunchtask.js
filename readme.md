@@ -56,7 +56,7 @@ Refer towards the end of the spec file for the working example.
 
 ### Description function
 
-*Instantiation.* `new ChrunchTask(fn)`, `fn` is a required function that takes three parameters: `function(init, body, fin)`
+**Instantiation.** `new ChrunchTask(fn)`, `fn` is a required function that takes three parameters: `function(init, body, fin)`
 
 At first, we need to create an instance of a `ChrunchTask` with a function, passed as the only parameter, to the `new CrunchTask`. This function is called a _description function_. Without it, a task cannot be said to be described, thus has no meaning at all. A _description function_ takes three parameters, `init`, `body`, and `fin`:
 
@@ -84,7 +84,8 @@ var runInstance2 = task.run(-1, 1);
 
 ### Initialization setup function and Init function
 
-*Local variables intitialization.* `init(fn)`, a call to `init` inside a _description function_ is optional. `fn` is optional, and is a function that takes variable number of arguments: `function(arg0, arg1, arg2,..)` - initialization values passed from `task.run(arg0, arg1, arg2,..)`.
+**Local variables intitialization.** `init(fn)`, a call to `init` inside a _description function_ is optional. `fn` is optional, and is a function that takes variable number of arguments: `function(arg0, arg1, arg2,..)` - initialization values passed from `task.run(arg0, arg1, arg2,..)`.
+
 
 How do the arguments get inside the task? With the help of a function passed as a parameter to `init`, _initialization setup_ function. We will call it an _init function_ now on. That's the only parameter passed to the _initialization setup_.
 
@@ -114,10 +115,11 @@ Unlike for those implementations that pass around a sort of a state-carrying obj
 
 ### Body setup function
 
-*Algorithm description setup.* `body(fn, timeLimit, timeout)`; a call to `body` inside a _description function_ is required.
+**Algorithm description setup.** `body(fn, timeLimit, timeout)`; a call to `body` inside a _description function_ is required.
 `fn` is required, and is a function that takes 3 arguments: `function(resolve, reject, notify)` - implements the logic, signals of its completion/failure/progress by calling `resolve(..)`, `reject(..)`, and `notify(..)`.
 `timeLimit`, Number of `false`, optional, default is 0; is a time limit, in ms, for a number of consecutive iterations allowed to take before re-queueing the rest. `false` tells the `fn` to get executed only once.
 `timeout`, Number, optional, default is 0; is a timeout amount after which the next queued execution starts.
+
 
 What use is it if we only receive the values and do nothing about them? Right. Heading forth, to the second parameter passed to the _description function_ as a `body` parameter that we called _body setup_ function.
 It takes three arguments: one required, and two optional.
@@ -125,7 +127,7 @@ We can call it a _body function_.
 
 #### Body function
 
-*First parameter to a _body setup_, `function(resolve, reject, notify)`*
+**First parameter to a _body setup_, `function(resolve, reject, notify)`**
 
 The first parameter a _body setup_ function accepts is called a _body function_. The logic of your iterating task is supposed to be there because it is this function that is going to be called over and over again until a Promise associated with this process is either resolved or rejected. This function is supposed to make use of the variables declared in the _description function_ and assigned later when the _init function_ is called.
 
@@ -165,7 +167,7 @@ var collatzTask = new CrunchTask(function(init, body, fin){
 
 #### Consecutive execution time limit
 
-*Second parameter to a _body setup_, optional, `Number` or `false`, default: 0*
+**Second parameter to a _body setup_, optional, `Number` or `false`, default: 0**
 
 With no additional parameters to the _body setup_, each consecutive call to a _body function_ will be queued after execution of the previous one with the help of setTimeout(fn, 0). But sometimes you can execute a number of iteration before the browser becomes unresponsive, or even, lagging becomes noticeable. So we can specify - with a second parameter passed to a _body setup_ - a time limit for consecutive iterations before starting breaking the process with the setTimeout. In the initial example, it is 100:
 
@@ -187,18 +189,20 @@ If you need the _body function_ to run only once, and never to queue up again, e
 
 #### Timeout amount
 
-*Third parameter to a _body setup_, optional, `Number`, default: 0*
+**Third parameter to a _body setup_, optional, `Number`, default: 0**
+
+Lorem ipsum
 
 
+```javascript
+```
 
 
 ```javascript
 ```
 
 
-```javascript
-```
-
+**Mandelbrot**
 
 ```javascript
 var mandelbrot = new ChrunchTask(function(init, body, fin){
