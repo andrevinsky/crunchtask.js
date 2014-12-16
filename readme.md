@@ -50,7 +50,7 @@ for(var i = 0; i < 1000; i++) {
 
 ```
 
-Refer towards the end of the spec file for the working example.
+Refer towards the end of the spec unit-test file (`test/unit/crunchtaskSpec.coffee`) for the working example.
 
 ## How do we come to this setup?
 
@@ -191,7 +191,7 @@ If you need the _body function_ to run only once, and never to queue up again, e
 
 **Third parameter to a _body setup_, optional, `Number`, default: 0**
 
-Lorem ipsum
+If the _body function_ is expected to be re-queued for execution not immediately but with a given timeout, the third parameter is just about that. Internally this value, if specified, or 0, is used with the `setTimeout`.
 
 
 ### Finalization setup
@@ -199,7 +199,7 @@ Lorem ipsum
 **Finalization setup.** `fin(fn)`; a call to `fin` inside a _description function_ is optional.
 `fn` is optional, and is a function that takes 1 parameter: `function(status)` - implements the logic that is supposed to take place _after_ the computation is complete, e.g. values checking, debugging, console output, etc. The `status` can be of values: `true` (resolved), `false` (rejected), and a string `'aborted'`.
 
-Lorem ipsum
+The _finally function_ is useful for debugging purposes and for coding clarity because it allows to see the local variables still, unlike the done/fail handlers. The only argument it receives from the finished run-task is a status: `true` - resolved, `false` - rejected. There's no need for extra data as it is easily obtained from the closest scope.
 
 ```javascript
 //...
@@ -217,14 +217,66 @@ Lorem ipsum
 
 ### Instantiation
 
+```
+// creates a task object
+var task = new ChrunchTask(function(init, body, fin){
+  // local variables, just declaration
+
+  // optional:
+  init(function(/* run-time values*/){
+    // assignment of run-time values to the declared variables
+  });
+
+  // required:
+  body(function(resolve /*fn*/, reject /*fn*/, notify /*fn*/){
+      // logic that may call resolve or reject
+    },
+    timeframeLimit /* optional; false, or number; default: true*/,
+    timeout /* optional; number; default: 0*/
+  );
+
+  // optional:
+  fin(function(status /*bool*/){
+    // logging, or value-checking
+  });
+});
+```
+
 ### Task object
+
+`Task` object
+
+  Properties:
+
+  * `id`: number - unique identifier of a task
+  * `timestamp`: number - timestamp of the time the task declaration was created
+
+  Methods:
+
+  * `run(args)`: `run-task` instance, _arbitrary arguments, optional_
+  * `then(task)`: `task` instance, _argument: task, required_
+  * `onRun(fn)`:
+  * `done(fn)`:
+  * `fail(fn)`:
+  * `always(fn)`:
+  * `progress(fn)`:
+  * `abort()`:
+  * `pause()`:
+  * `resume()`:
 
 ### Run-task object
 
+`Run-task` object, Promise-based
 
-```javascript
-```
+  Methods:
 
+  * all methods of a Promise instance
+  * `abort()`:
+  * `pause()`:
+  * `resume()`:
+
+
+## Other samples
 
 **Mandelbrot sample**
 
@@ -250,18 +302,16 @@ var mandelbrot = new ChrunchTask(function(init, body, fin){
     } else {
       reject (xR, xI, count);
     }
-  });
+  }, 100);
 
 
   fin(function(status){
     if (status === true) {
-
-    } else {}
+      // ..
+    }
   });
 
 });
 
 ```
-
-
 
