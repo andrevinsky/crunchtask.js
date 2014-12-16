@@ -1,7 +1,7 @@
 {
   "name": "CrunchTask",
   "version": "0.1.0",
-  "description": "A library to allow computing of long-running tasks revised and based on an easy-to-remember usage pattern",
+  "description": "A library that executes long-running tasks without freezing of a browser and emloys an easy usage pattern ",
   "main": "index.html",
   "scripts": {
     "test": "karma.cmd"
@@ -12,7 +12,8 @@
   },
   "keywords": [
     "crunch",
-    "taska"
+    "task",
+    "crunchtask"
   ],
   "author": "Andrew Revinsky",
   "license": "BSD",
