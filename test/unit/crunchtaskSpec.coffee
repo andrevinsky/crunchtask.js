@@ -61,6 +61,10 @@ describe 'TaskCruncher Spec: ', ->
       expect(task.onRun).toBeDefined()
       expect(type(task.onRun)).toEqual('function')
 
+    it 'declares `onIdle` method', ->
+      expect(task.onIdle).toBeDefined()
+      expect(type(task.onIdle)).toEqual('function')
+
     it 'declares `done` method', ->
       expect(task.done).toBeDefined()
       expect(type(task.done)).toEqual('function')
@@ -88,6 +92,10 @@ describe 'TaskCruncher Spec: ', ->
     it 'declares `resume` method', ->
       expect(task.resume).toBeDefined()
       expect(type(task.resume)).toEqual('function')
+
+    it 'declares `isIdle` method', ->
+      expect(task.isIdle).toBeDefined()
+      expect(type(task.isIdle)).toEqual('function')
 
     it 'returns promise object when `run` is called', ->
       result = task.run()
@@ -624,6 +632,27 @@ describe 'TaskCruncher Spec: ', ->
         setTimeout ->
           done()
         , 4 * timeoutAmount + safetyMargin
+        return
+
+      it 'uses `onIdle()` method to signal  all instances are finished and `isIdle()` method to check', (done)->
+        task = new CrunchTask (init, body, fin)->
+          body (resolve)->
+            debugger;
+            do resolve
+          return
+        task.onIdle ()->
+          debugger
+          expect(task.isIdle()).toBe(true)
+          done()
+
+        expect(task.isIdle()).toBe(true)
+        task.run()
+        task.run()
+        expect(task.isIdle()).toBe(false)
+
+        return
+
+      return
 
     describe 'Examples in the readme.md file', ->
       collatzTask = null
