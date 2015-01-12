@@ -1,5 +1,7 @@
 # ChrunchTask.js [![Code Climate](https://codeclimate.com/github/AndrewRevinsky/crunchtask.js/badges/gpa.svg)](https://codeclimate.com/github/AndrewRevinsky/crunchtask.js)
 
+[![Gitter](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/AndrewRevinsky/crunchtask.js?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
+
 **Parallel execution like never before**. ChrunchTask.js is a javascript library that allows execution of lengthy logic without freezing your browser. It is based on intuitive usage pattern and utilizes native promises where possible.
 
 ChrunchTask.js supports chaining the tasks execution and is designed to be used in contexts where heavy computation is expected, such as computing dots for scatter-plots graphs.
