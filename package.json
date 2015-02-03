@@ -1,6 +1,6 @@
 {
   "name": "CrunchTask",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "A library that executes long-running tasks without freezing of a browser and emloys an easy usage pattern ",
   "main": "index.html",
   "scripts": {

@@ -28,14 +28,14 @@ var CrunchTask = require('../lib/crunchtask');
 //
 //console.info(x);
 //
-var count = 0;
+var count = 0, time = new Date();
 
-var f = CrunchTask.for([-1,1.00,.01], [-1,1.00,.01], function(i, j) {
+var f = CrunchTask.for([-1,1.00,.001], [-1,1.00,.001], function(i, j) {
   //console.log('i=', i, ' j=', j);
   count++;
 }, function(){
   console.info(arguments);
-  console.log(count);
+  console.log(count, new Date() - time);
 });
 
 f.run();
