@@ -565,7 +565,7 @@ describe 'TaskCruncher Spec: ', ->
         result2 = task.run(2)
 
         setTimeout ->
-          console.log 'after ' + timeoutAmount + 'ms'
+#          console.log 'after ' + timeoutAmount + 'ms'
           expect(foo.bar.calls.count()).toEqual(2)
           expect(memo[1]).toEqual(1)
           expect(memo[2]).toEqual(1)
@@ -573,7 +573,7 @@ describe 'TaskCruncher Spec: ', ->
         , timeoutAmount + safetyMargin
 
         setTimeout ->
-          console.log 'after ' + 2 * timeoutAmount + 'ms'
+#          console.log 'after ' + 2 * timeoutAmount + 'ms'
           expect(foo.bar.calls.count()).toEqual(3)
           expect(memo[1]).toEqual(1)
           expect(memo[2]).toEqual(2)
@@ -581,7 +581,7 @@ describe 'TaskCruncher Spec: ', ->
         , 2 * timeoutAmount + safetyMargin
 
         setTimeout ->
-          console.log 'after ' + 3 * timeoutAmount + 'ms'
+#          console.log 'after ' + 3 * timeoutAmount + 'ms'
           expect(foo.bar.calls.count()).toEqual(5)
           expect(memo[1]).toEqual(2)
           expect(memo[2]).toEqual(3)
@@ -641,7 +641,6 @@ describe 'TaskCruncher Spec: ', ->
             do resolve
           return
         task.onIdle ()->
-          debugger
           expect(task.isIdle()).toBe(true)
           done()
 
@@ -652,6 +651,126 @@ describe 'TaskCruncher Spec: ', ->
 
         return
 
+      return
+
+    describe 'Convenience method `for`', ->
+
+      foo = {}
+
+      beforeEach(()->
+        foo.bar = (() ->
+        )
+      )
+
+      it 'declares static `for` method', ()->
+        expect(CrunchTask.for).toBeDefined()
+        expect(type(CrunchTask.for)).toEqual('function')
+        return
+
+      it 'once called, the `for` method creates a CrunchTask instance', ()->
+        forloop = CrunchTask.for(()->)
+        expect(forloop instanceof CrunchTask).toBe(true);
+        return
+
+      it '`for` method accepts loop control numbers and a worker function or a task', (done)->
+
+        spyOn(foo, 'bar').and.callThrough()
+
+        forloop = CrunchTask.for(0, 2, foo.bar)
+
+        expect(foo.bar).not.toHaveBeenCalled()
+
+        forloop.run()
+
+        setTimeout(()->
+          expect(foo.bar).toHaveBeenCalled()
+          expect(foo.bar.calls.count()).toEqual(2)
+          expect(foo.bar.calls.argsFor(0)).toEqual([0])
+          done()
+        , 10)
+
+        return
+
+      it '`run` methods supercedes loop control values given to the `for` method', (done)->
+
+        spyOn(foo, 'bar').and.callThrough()
+
+        forloop = CrunchTask.for(0, 2, foo.bar)
+
+        expect(foo.bar).not.toHaveBeenCalled()
+
+        forloop.run(0, 5)
+
+        setTimeout(()->
+          expect(foo.bar).toHaveBeenCalled()
+          expect(foo.bar.calls.count()).toEqual(5)
+          expect(foo.bar.calls.argsFor(0)).toEqual([0])
+          expect(foo.bar.calls.argsFor(1)).toEqual([1])
+          expect(foo.bar.calls.argsFor(2)).toEqual([2])
+          expect(foo.bar.calls.argsFor(3)).toEqual([3])
+          expect(foo.bar.calls.argsFor(4)).toEqual([4])
+          done()
+        , 10)
+
+        return
+
+      it 'loop-control values may be supplied in groups, as arrays of 1..3 elements', (done)->
+
+        spyOn(foo, 'bar').and.callThrough()
+
+        forloop = CrunchTask.for([0, 2], [0, 2], foo.bar)
+
+        expect(foo.bar).not.toHaveBeenCalled()
+
+        forloop.done( ()->
+          expect(foo.bar).toHaveBeenCalled()
+          expect(foo.bar.calls.count()).toEqual(4)
+          expect(foo.bar.calls.argsFor(0)).toEqual([0, 0])
+          expect(foo.bar.calls.argsFor(1)).toEqual([1, 0])
+          expect(foo.bar.calls.argsFor(2)).toEqual([0, 1])
+          expect(foo.bar.calls.argsFor(3)).toEqual([1, 1])
+          done()
+        )
+
+        forloop.run()
+        return
+
+      it 'loop-control values in the group may initiate a countdown loop..', (done)->
+
+        spyOn(foo, 'bar').and.callThrough()
+
+        forloop = CrunchTask.for([1, -1], [1, -1], foo.bar)
+
+        expect(foo.bar).not.toHaveBeenCalled()
+
+        forloop.done( ()->
+          expect(foo.bar).toHaveBeenCalled()
+          expect(foo.bar.calls.count()).toEqual(4)
+          expect(foo.bar.calls.argsFor(0)).toEqual([1, 1])
+          expect(foo.bar.calls.argsFor(1)).toEqual([0, 1])
+          expect(foo.bar.calls.argsFor(2)).toEqual([1, 0])
+          expect(foo.bar.calls.argsFor(3)).toEqual([0, 0])
+          done()
+        )
+
+        forloop.run()
+        return
+
+      it 'if no function is supplied, the loop resolves automatically when started', (done)->
+        spyOn(foo, 'bar')
+        forloop = CrunchTask.for()
+        forloop.done(foo.bar)
+
+        expect(foo.bar.calls.any()).toEqual(false)
+
+        forloop.run()
+
+        setTimeout(()->
+          expect(foo.bar.calls.any()).toEqual(true)
+          done()
+        , 10)
+
+        return
       return
 
     describe 'Examples in the readme.md file', ->
