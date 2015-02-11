@@ -1,6 +1,6 @@
 {
   "name": "CrunchTask",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "A library that executes long-running tasks without freezing of a browser and emloys an easy usage pattern ",
   "main": "index.html",
   "scripts": {
@@ -24,5 +24,8 @@
     "jasmine-core": "~2.1.3",
     "karma-jasmine": "~0.3.2",
     "karma-chrome-launcher": "~0.1.6"
+  },
+  "dependencies": {
+    "promise-polyfill": "~1.1.6"
   }
 }
