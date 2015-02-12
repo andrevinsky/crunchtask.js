@@ -121,8 +121,44 @@ describe 'TaskCruncher Spec: ', ->
           expect(foo.bar.calls.any()).toEqual(true)
           expect(foo.bar.calls.argsFor(0)[0] instanceof Error).toEqual(true);
           done()
-      ,1000)
+      , 1000)
 
+    describe 'methods can be chained', ()->
+      task = null
+
+      beforeEach ->
+        task = new CrunchTask (init, body, fin)->
+          return
+
+      it 'all task\'s methods can be invoked on the result of `onRun()` method', ->
+        expect(task.onRun(()->) instanceof CrunchTask).toBe(true)
+
+      it 'all task\'s methods can be invoked on the result of `onIdle()` method', ->
+        expect(task.onIdle(()->) instanceof CrunchTask).toBe(true)
+
+      it 'all task\'s methods can be invoked on the result of `done()` method', ->
+        expect(task.done(()->) instanceof CrunchTask).toBe(true)
+
+      it 'all task\'s methods can be invoked on the result of `fail()` method', ->
+        expect(task.fail(()->) instanceof CrunchTask).toBe(true)
+
+      it 'all task\'s methods can be invoked on the result of `always()` method', ->
+        expect(task.always(()->) instanceof CrunchTask).toBe(true)
+
+      it 'all task\'s methods can be invoked on the result of `progress()` method', ->
+        expect(task.progress(()->) instanceof CrunchTask).toBe(true)
+
+      it 'all task\'s methods can be invoked on the result of `abort()` method', ->
+        expect(task.abort(()->) instanceof CrunchTask).toBe(true)
+
+      it 'all task\'s methods can be invoked on the result of `pause()` method', ->
+        expect(task.pause(()->) instanceof CrunchTask).toBe(true)
+
+      it 'all task\'s methods can be invoked on the result of `resume()` method', ->
+        expect(task.resume(()->) instanceof CrunchTask).toBe(true)
+
+
+      return
 
     describe 'the `promise` obtained by `run` has three extra methods:', ()->
       runResult = null
