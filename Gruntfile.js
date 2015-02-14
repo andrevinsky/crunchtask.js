@@ -26,9 +26,10 @@ module.exports = function(grunt) {
           {
             src: [
               'bower_components/promise-polyfill/Promise.js',
+              'bower_components/promise-done-6.0.0/index.js',
               'lib/<%= pkg.name %>.js'
             ],
-            dest: 'dst/<%= pkg.name %>.js',
+            dest: 'dest/<%= pkg.name %>.js',
             nonull: true
           }
         ]
@@ -41,10 +42,16 @@ module.exports = function(grunt) {
         '<%= grunt.template.today("yyyy-mm-dd") %> */'
       },
       browser: {
-        src: 'dst/<%= pkg.name %>.js',
-        dest: 'dst/<%= pkg.name %>.min.js'
+        src: 'dest/<%= pkg.name %>.js',
+        dest: 'dest/<%= pkg.name %>.min.js'
       }
-		}
+		},
+
+    karma: {
+      unit: {
+        configFile: 'karma.conf.js'
+      }
+    }
 
 	});
 
@@ -52,6 +59,11 @@ module.exports = function(grunt) {
 	grunt.loadNpmTasks('grunt-contrib-uglify');
 
   grunt.loadNpmTasks('grunt-bump');
+
+  grunt.loadNpmTasks('grunt-karma');
+
+
+  grunt.registerTask('test', ['karma']);
 
 	grunt.registerTask('build', ['concat:browser', 'uglify:browser']);
 	grunt.registerTask('bump-minor', ['bump:minor']);

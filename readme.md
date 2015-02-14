@@ -6,7 +6,7 @@ ChrunchTask.js supports chaining the tasks execution and is designed to be used 
 
 ## Using
 
-ChrunchTask.js can be used as a part ..
+ChrunchTask.js can be used thus:
 
     bower install chrunchtask
 

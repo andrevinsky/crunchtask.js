@@ -54,7 +54,7 @@ module.exports = function(config) {
 
 
     // enable / disable watching file and executing tests whenever any file changes
-    autoWatch: true,
+    autoWatch: false,
 
 
     // start these browsers
@@ -65,17 +65,28 @@ module.exports = function(config) {
 
     // Continuous Integration mode
     // if true, Karma captures browsers, runs the tests and exits
-    singleRun: false,
+    singleRun: true,
     browserNoActivityTimeout: 100000,
 
-    //plugins : [
+    plugins : ['karma-*'],
+    //plugins :
+        //[
     //  //'karma-junit-reporter',
     //  'karma-chrome-launcher',
+    //  'karma-phantomjs-launcher'
     //  //'karma-firefox-launcher',
     //  //'karma-opera-launcher',
     //  //'karma-ie-launcher',
     //  'karma-jasmine'
     //],
+    // This is the new content for your travis-ci configuration test
+    //  Custom launcher for Travis-CI
+    customLaunchers: {
+      Chrome_travis_ci: {
+        base: 'Chrome',
+        flags: ['--no-sandbox']
+      }
+    },
 
     coffeePreprocessor: {
       // options passed to the coffee compiler
@@ -89,4 +100,9 @@ module.exports = function(config) {
       }
     }
   });
+
+  if(process.env.TRAVIS){
+    config.browsers = ['Chrome_travis_ci'];
+  }
+
 };
