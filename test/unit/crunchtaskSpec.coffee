@@ -1097,11 +1097,13 @@ describe 'TaskCruncher Spec: ', ->
 #        start = new Date() - 0;
 
         expect(type(ddone)).toEqual('function')
-        expect(type(setTimeout)).toBeDefined()
-        expect(type(setTimeout)).toEqual('function')
+
 
         collatzTask.onIdle( ()->
+          expect(type(setTimeout)).toBeDefined()
+          expect(type(setTimeout)).toEqual('function')
           setTimeout ddone, 100
+          return
         )
 
         collatzTask.run(1).done (arr)->
