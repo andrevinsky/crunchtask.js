@@ -1076,7 +1076,7 @@
         });
       });
       it('implements a Collatz conjecture, aka 3n + 1 problem, algorithm', function(ddone) {
-        var runTask1;
+        var k, runTask1, v, _fn, _i, _len, _ref;
         collatzTask.onIdle(ddone);
         runTask1 = collatzTask.run(1);
         expect(runTask1).toBeDefined();
@@ -1100,6 +1100,19 @@
           expect(n).toEqual(63728127);
           expect(count).toEqual(949);
         });
+        _ref = [0, 1, 7, 2, 5, 8, 16, 3, 19, 6, 14, 9, 9, 17, 17, 4, 12, 20, 20, 7, 7, 15, 15, 10, 23, 10, 111, 18, 18, 18, 106, 5, 26, 13, 13, 21, 21, 21, 34, 8, 109, 8, 29, 16, 16, 16, 104, 11, 24, 24];
+        _fn = function(v, k) {
+          collatzTask.run(k + 1).done(function(arr) {
+            var count, n;
+            n = arr[0], count = arr[1];
+            expect(n).toEqual(k + 1);
+            expect(count).toEqual(v);
+          });
+        };
+        for (k = _i = 0, _len = _ref.length; _i < _len; k = ++_i) {
+          v = _ref[k];
+          _fn(v, k);
+        }
       });
     });
   });

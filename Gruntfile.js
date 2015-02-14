@@ -26,6 +26,7 @@ module.exports = function(grunt) {
           {
             src: [
               'bower_components/promise-polyfill/Promise.js',
+              'bower_components/promise-done-6.0.0/index.js',
               'lib/<%= pkg.name %>.js'
             ],
             dest: 'dest/<%= pkg.name %>.js',
