@@ -1,10 +1,10 @@
 {
-  "name": "CrunchTask",
+  "name": "crunchtask",
   "version": "0.3.0",
-  "description": "A library that executes long-running tasks without freezing of a browser and emloys an easy usage pattern ",
-  "main": "index.html",
+  "description": "A library that executes long-running tasks without freezing of a machine and employs an easy usage pattern ",
+  "main": "lib/crunchtask.js",
   "scripts": {
-    "test": "karma.cmd"
+    "test": "karma.conf.js"
   },
   "repository": {
     "type": "git",
@@ -16,14 +16,22 @@
     "crunchtask"
   ],
   "author": "Andrew Revinsky",
-  "license": "BSD",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/AndrewRevinsky/crunchtask.js/issues"
+  },
+  "homepage": "https://github.com/AndrewRevinsky/crunchtask.js",
   "readmeFilename": "README.md",
-  "gitHead": "e4ce7a448e8c64ce272bdaad649e31704b12fab9",
+  "gitHead": "82a0f7b3a728bc56ab9ce4477c0d116eed64bed3",
   "devDependencies": {
     "karma-coffee-preprocessor": "^0.2.1",
     "jasmine-core": "~2.1.3",
     "karma-jasmine": "~0.3.2",
-    "karma-chrome-launcher": "~0.1.6"
+    "karma-chrome-launcher": "~0.1.6",
+    "grunt-contrib-concat": "~0.5.0",
+    "grunt": "~0.4.5",
+    "grunt-contrib-uglify": "~0.7.0",
+    "grunt-bump": "~0.1.0"
   },
   "dependencies": {
     "promise-polyfill": "~1.1.6"
