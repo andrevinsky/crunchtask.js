@@ -1085,7 +1085,7 @@ describe 'TaskCruncher Spec: ', ->
 
   describe 'Examples in the readme.md file', ->
     collatzTask = null
-    beforeEach( ->
+    beforeEach ()->
       collatzTask = new CrunchTask (init, body, fin) ->
         nInit = n = threshold = null
         totalStoppingTime = 0
@@ -1093,6 +1093,7 @@ describe 'TaskCruncher Spec: ', ->
         init (_n, _threshold)->
           nInit = n = _n
           threshold = _threshold
+          return
 
         body (resolve, reject)->
           return resolve(nInit, totalStoppingTime) if n is 1
@@ -1102,25 +1103,20 @@ describe 'TaskCruncher Spec: ', ->
           else
             n = n / 2
           totalStoppingTime++
+          return
         , 100
 
         fin (status)->
           if status is false
             console.log 'Collatz conjecture breaking candidate:', nInit
-    )
-
-    it 'implements a Collatz conjecture, aka 3n + 1 problem, algorithm', (done)->
-
-
-
-      collatzTask.onIdle( ()->
-        expect(type(setTimeout)).toBeDefined()
-        expect(type(setTimeout)).toEqual('function')
-        expect(type(done)).toBeDefined()
-        expect(type(done)).toEqual('function')
-        setTimeout(done, 100)
+          return
         return
-      )
+      return
+
+
+    it 'implements a Collatz conjecture, aka 3n + 1 problem, algorithm', (ddone)->
+
+      collatzTask.onIdle ddone
 
       collatzTask.run(1).done (arr)->
         [n, count] = arr
