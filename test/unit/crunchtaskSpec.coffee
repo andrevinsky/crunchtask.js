@@ -4,6 +4,7 @@ describe 'TaskCruncher Spec: ', ->
 
   it 'Use Jasmine with Version 2.xx', ->
     expect(jasmine.version).toMatch(/^2\./);
+    return
 
   type = do ->
     classToType = {}
@@ -19,6 +20,7 @@ describe 'TaskCruncher Spec: ', ->
     it 'declares a type CrunchTask on the global scope', ->
       expect(CrunchTask).toBeDefined()
       return
+    return
 
   describe 'Instantiation: ', ->
 
@@ -810,327 +812,347 @@ describe 'TaskCruncher Spec: ', ->
           do done
       )
       task.run()
+      return
 
     it 'can be chained with the `then()` method creating a new task', ->
-        result1 = new CrunchTask (init, body, fin)->
-          return
+      result1 = new CrunchTask (init, body, fin)->
+        return
 
-        result2 = new CrunchTask (init, body, fin)->
-          return
+      result2 = new CrunchTask (init, body, fin)->
+        return
 
-        result3 = result1.then(result2)
+      result3 = result1.then(result2)
 
-        expect(result3).not.toEqual(result1)
-        expect(result3).not.toEqual(result2)
-        expect(result3 instanceof CrunchTask).toEqual(true)
+      expect(result3).not.toEqual(result1)
+      expect(result3).not.toEqual(result2)
+      expect(result3 instanceof CrunchTask).toEqual(true)
+      return
 
-    describe 'close-to-real usage examples', ->
-      originalTimeout = null
+    return
+
+  describe 'close-to-real usage examples', ->
+    originalTimeout = null
+    originalTimeout = jasmine.getEnv().defaultTimeoutInterval || jasmine.DEFAULT_TIMEOUT_INTERVAL
+    #      jasmine.getEnv().defaultTimeoutInterval = 100000
+    #      jasmine.DEFAULT_TIMEOUT_INTERVAL = 100000
+
+    beforeEach (done) ->
       originalTimeout = jasmine.getEnv().defaultTimeoutInterval || jasmine.DEFAULT_TIMEOUT_INTERVAL
-      #      jasmine.getEnv().defaultTimeoutInterval = 100000
-      #      jasmine.DEFAULT_TIMEOUT_INTERVAL = 100000
+      #        jasmine.getEnv().defaultTimeoutInterval = 100000
+      jasmine.DEFAULT_TIMEOUT_INTERVAL = 10000
+      done()
+      return
 
-      beforeEach (done) ->
-        originalTimeout = jasmine.getEnv().defaultTimeoutInterval || jasmine.DEFAULT_TIMEOUT_INTERVAL
-        #        jasmine.getEnv().defaultTimeoutInterval = 100000
-        jasmine.DEFAULT_TIMEOUT_INTERVAL = 10000
-        done()
+    afterEach () ->
+      jasmine.getEnv().defaultTimeoutInterval = originalTimeout
+      jasmine.DEFAULT_TIMEOUT_INTERVAL = originalTimeout
+      return
 
-      afterEach () ->
-        jasmine.getEnv().defaultTimeoutInterval = originalTimeout
-        jasmine.DEFAULT_TIMEOUT_INTERVAL = originalTimeout
-
-      it 'uses `body`/`notify` c/back to notify listeners of the progress of the task', ((done) ->
-        foo = {
-          bar: (() ->
-          )
-        }
-        spyOn(foo, 'bar').and.callThrough();
-
-        runCycles = 3
-
-        task = new CrunchTask (init, body, fin)->
-          count = runCycles
-          body((resolve, reject, notify)->
-            notify('const', count--)
-            if !count
-              resolve()
-          )
-          return
-
-        task.progress(foo.bar)
-
-        expect(foo.bar.calls.any()).toEqual(false)
-        task.run()
-
-        task.always(()->
-          expect(foo.bar.calls.any()).toEqual(true)
-          expect(foo.bar.calls.count()).toEqual(runCycles)
-          expect(foo.bar.calls.argsFor(0)).toEqual(['const', runCycles])
-          expect(foo.bar.calls.argsFor(runCycles - 1)).toEqual(['const', 1])
-          done()
+    it 'uses `body`/`notify` c/back to notify listeners of the progress of the task', ((done) ->
+      foo = {
+        bar: (() ->
         )
-      )
+      }
 
-      it 'uses `abort` method called on `run` result to abort execution of a run-instance', (done)->
-        memo = {}
-        foo = {
-          bar: ((id) ->
-            memo[id] = (memo[id] || 0) + 1
-          )
-        }
-        spyOn(foo, 'bar').and.callThrough();
+      spyOn(foo, 'bar').and.callThrough();
 
-        timeoutAmount = 100
-        safetyMargin = Math.floor(timeoutAmount / 2)
+      runCycles = 3
 
-        task = new CrunchTask (init, body, fin)->
-          id = null
-          init (_id)->
-            id = _id
-          body ->
-            foo.bar(id)
-          ,0, timeoutAmount
-
-        task.always ->
-          expect(foo.bar.calls.any()).toEqual(true)
-
-        expect(foo.bar.calls.any()).toEqual(false)
-
-        result1 = task.run(1)
-        result2 = task.run(2)
-
-        setTimeout ->
-          expect(foo.bar.calls.count()).toEqual(2)
-          expect(memo[1]).toEqual(1)
-          expect(memo[2]).toEqual(1)
-          result1.abort()
-        , timeoutAmount + safetyMargin
-
-        setTimeout ->
-          expect(foo.bar.calls.count()).toEqual(3)
-          expect(memo[1]).toEqual(1)
-          expect(memo[2]).toEqual(2)
-          result1.resume()
-        , 2 * timeoutAmount + safetyMargin
-
-        setTimeout ->
-          expect(foo.bar.calls.count()).toEqual(4)
-          expect(memo[1]).toEqual(1)
-          expect(memo[2]).toEqual(3)
-          task.abort()
-        , 3 * timeoutAmount + safetyMargin
-
-        setTimeout ->
-          done()
-        , 4 * timeoutAmount + safetyMargin
-
-
-      it 'uses `abort` method called on task to abort execution of all run-instances', (done)->
-        moo = {
-          id: 1,
-          bar: () ->
-        }
-        spyOn(moo, 'bar').and.callThrough()
-
-        task = new CrunchTask (init, body, fin)->
-          body moo.bar
-
-        expect(moo.bar.calls.any()).toEqual(false)
-
-        task.always ()->
-          # called twice !
-          expect(moo.bar.calls.any()).toEqual(false)
-
-        result1 = task.run();
-        result2 = task.run();
-        task.abort()
-
-        window.setTimeout done, 100
-
-
-      it 'uses `pause`/`resume` method pair called on `run` result to pause/resume the execution of a single thread', (done)->
-        memo = {}
-        foo = {
-          bar: ((id) ->
-            memo[id] = (memo[id] || 0) + 1
-          )
-        }
-        spyOn(foo, 'bar').and.callThrough()
-
-        timeoutAmount = 100
-        safetyMargin = Math.floor(timeoutAmount / 2)
-
-        task = new CrunchTask (init, body, fin)->
-          id = null
-          init (_id)->
-            id = _id
-          body ->
-            foo.bar(id)
-          ,0, timeoutAmount
-
-        task.always ->
-          expect(foo.bar.calls.any()).toEqual(true)
-
-        expect(foo.bar.calls.any()).toEqual(false)
-
-        result1 = task.run(1)
-        result2 = task.run(2)
-
-        setTimeout ->
-#          console.log 'after ' + timeoutAmount + 'ms'
-          expect(foo.bar.calls.count()).toEqual(2)
-          expect(memo[1]).toEqual(1)
-          expect(memo[2]).toEqual(1)
-          result1.pause()
-        , timeoutAmount + safetyMargin
-
-        setTimeout ->
-#          console.log 'after ' + 2 * timeoutAmount + 'ms'
-          expect(foo.bar.calls.count()).toEqual(3)
-          expect(memo[1]).toEqual(1)
-          expect(memo[2]).toEqual(2)
-          result1.resume()
-        , 2 * timeoutAmount + safetyMargin
-
-        setTimeout ->
-#          console.log 'after ' + 3 * timeoutAmount + 'ms'
-          expect(foo.bar.calls.count()).toEqual(5)
-          expect(memo[1]).toEqual(2)
-          expect(memo[2]).toEqual(3)
-          task.abort()
-        , 3 * timeoutAmount + safetyMargin
-
-        setTimeout ->
-          done()
-        , 4 * timeoutAmount + safetyMargin
-
-
-      it 'uses `pause`/`resume` method pair called on task to pause/resume the execution of  all run-instances', (done)->
-        foo = {
-          bar: (() ->
-          )
-        }
-        spyOn(foo, 'bar').and.callThrough()
-
-        timeoutAmount = 100
-        safetyMargin = Math.floor(timeoutAmount / 2)
-
-        task = new CrunchTask (init, body, fin)->
-          body foo.bar, 0, timeoutAmount
-
-        expect(foo.bar.calls.any()).toEqual(false)
-
-        task.always ()->
-          expect(foo.bar.calls.any()).toEqual(true)
-
-        result1 = task.run()
-        result2 = task.run()
-
-        setTimeout ->
-          expect(foo.bar.calls.count()).toEqual(2 * 1)
-          task.pause()
-        , timeoutAmount + safetyMargin
-
-        setTimeout ->
-          expect(foo.bar.calls.count()).toEqual(2 * 1)
-          task.resume()
-        , 2 * timeoutAmount + safetyMargin
-
-        setTimeout ->
-          expect(foo.bar.calls.count()).toEqual(2 * 2)
-          task.abort()
-        , 3 * timeoutAmount + safetyMargin
-
-        setTimeout ->
-          done()
-        , 4 * timeoutAmount + safetyMargin
-        return
-
-      it 'uses `onIdle()` method to signal  all instances are finished and `isIdle()` method to check', (done)->
-        task = new CrunchTask (init, body, fin)->
-          body (resolve)->
-            debugger;
-            do resolve
+      task = new CrunchTask (init, body, fin)->
+        count = runCycles
+        body((resolve, reject, notify)->
+          notify('const', count--)
+          if !count
+            resolve()
           return
-        task.onIdle ()->
-          expect(task.isIdle()).toBe(true)
-          done()
-
-        expect(task.isIdle()).toBe(true)
-        task.run()
-        task.run()
-        expect(task.isIdle()).toBe(false)
-
+        )
         return
 
+      task.progress(foo.bar)
+
+      expect(foo.bar.calls.any()).toEqual(false)
+
+      task.run()
+
+      task.always(()->
+        expect(foo.bar.calls.any()).toEqual(true)
+        expect(foo.bar.calls.count()).toEqual(runCycles)
+        expect(foo.bar.calls.argsFor(0)).toEqual(['const', runCycles])
+        expect(foo.bar.calls.argsFor(runCycles - 1)).toEqual(['const', 1])
+        done()
+        return
+      )
+      return
+    )
+
+    it 'uses `abort` method called on `run` result to abort execution of a run-instance', (done)->
+      memo = {}
+      foo = {
+        bar: ((id) ->
+          memo[id] = (memo[id] || 0) + 1
+        )
+      }
+      spyOn(foo, 'bar').and.callThrough();
+
+      timeoutAmount = 100
+      safetyMargin = Math.floor(timeoutAmount / 2)
+
+      task = new CrunchTask (init, body, fin)->
+        id = null
+        init (_id)->
+          id = _id
+        body ->
+          foo.bar(id)
+        ,0, timeoutAmount
+
+      task.always ->
+        expect(foo.bar.calls.any()).toEqual(true)
+
+      expect(foo.bar.calls.any()).toEqual(false)
+
+      result1 = task.run(1)
+      result2 = task.run(2)
+
+      setTimeout ->
+        expect(foo.bar.calls.count()).toEqual(2)
+        expect(memo[1]).toEqual(1)
+        expect(memo[2]).toEqual(1)
+        result1.abort()
+      , timeoutAmount + safetyMargin
+
+      setTimeout ->
+        expect(foo.bar.calls.count()).toEqual(3)
+        expect(memo[1]).toEqual(1)
+        expect(memo[2]).toEqual(2)
+        result1.resume()
+      , 2 * timeoutAmount + safetyMargin
+
+      setTimeout ->
+        expect(foo.bar.calls.count()).toEqual(4)
+        expect(memo[1]).toEqual(1)
+        expect(memo[2]).toEqual(3)
+        task.abort()
+      , 3 * timeoutAmount + safetyMargin
+
+      setTimeout ->
+        done()
+      , 4 * timeoutAmount + safetyMargin
       return
 
 
-    describe 'Examples in the readme.md file', ->
-      collatzTask = null
-      beforeEach( ->
-        collatzTask = new CrunchTask (init, body, fin) ->
-          nInit = n = threshold = null
-          totalStoppingTime = 0
+    it 'uses `abort` method called on task to abort execution of all run-instances', (done)->
+      moo = {
+        id: 1,
+        bar: () ->
+      }
+      spyOn(moo, 'bar').and.callThrough()
 
-          init (_n, _threshold)->
-            nInit = n = _n
-            threshold = _threshold
+      task = new CrunchTask (init, body, fin)->
+        body moo.bar
 
-          body (resolve, reject)->
-            return resolve(nInit, totalStoppingTime) if n is 1
-            return reject(nInit, threshold, n) if n > threshold
-            if (n % 2)
-              n = 3 * n + 1
-            else
-              n = n / 2
-            totalStoppingTime++
-          , 100
+      expect(moo.bar.calls.any()).toEqual(false)
 
-          fin (status)->
-            if status is false
-              console.log 'Collatz conjecture breaking candidate:', nInit
+      task.always ()->
+        # called twice !
+        expect(moo.bar.calls.any()).toEqual(false)
+
+      result1 = task.run();
+      result2 = task.run();
+      task.abort()
+
+      window.setTimeout done, 100
+      return
+
+
+    it 'uses `pause`/`resume` method pair called on `run` result to pause/resume the execution of a single thread', (done)->
+      memo = {}
+      foo = {
+        bar: ((id) ->
+          memo[id] = (memo[id] || 0) + 1
+        )
+      }
+      spyOn(foo, 'bar').and.callThrough()
+
+      timeoutAmount = 100
+      safetyMargin = Math.floor(timeoutAmount / 2)
+
+      task = new CrunchTask (init, body, fin)->
+        id = null
+        init (_id)->
+          id = _id
+        body ->
+          foo.bar(id)
+        ,0, timeoutAmount
+
+      task.always ->
+        expect(foo.bar.calls.any()).toEqual(true)
+
+      expect(foo.bar.calls.any()).toEqual(false)
+
+      result1 = task.run(1)
+      result2 = task.run(2)
+
+      setTimeout ->
+#          console.log 'after ' + timeoutAmount + 'ms'
+        expect(foo.bar.calls.count()).toEqual(2)
+        expect(memo[1]).toEqual(1)
+        expect(memo[2]).toEqual(1)
+        result1.pause()
+      , timeoutAmount + safetyMargin
+
+      setTimeout ->
+#          console.log 'after ' + 2 * timeoutAmount + 'ms'
+        expect(foo.bar.calls.count()).toEqual(3)
+        expect(memo[1]).toEqual(1)
+        expect(memo[2]).toEqual(2)
+        result1.resume()
+      , 2 * timeoutAmount + safetyMargin
+
+      setTimeout ->
+#          console.log 'after ' + 3 * timeoutAmount + 'ms'
+        expect(foo.bar.calls.count()).toEqual(5)
+        expect(memo[1]).toEqual(2)
+        expect(memo[2]).toEqual(3)
+        task.abort()
+      , 3 * timeoutAmount + safetyMargin
+
+      setTimeout ->
+        done()
+      , 4 * timeoutAmount + safetyMargin
+      return
+
+
+    it 'uses `pause`/`resume` method pair called on task to pause/resume the execution of  all run-instances', (done)->
+      foo = {
+        bar: (() ->
+        )
+      }
+      spyOn(foo, 'bar').and.callThrough()
+
+      timeoutAmount = 100
+      safetyMargin = Math.floor(timeoutAmount / 2)
+
+      task = new CrunchTask (init, body, fin)->
+        body foo.bar, 0, timeoutAmount
+
+      expect(foo.bar.calls.any()).toEqual(false)
+
+      task.always ()->
+        expect(foo.bar.calls.any()).toEqual(true)
+
+      result1 = task.run()
+      result2 = task.run()
+
+      setTimeout ->
+        expect(foo.bar.calls.count()).toEqual(2 * 1)
+        task.pause()
+      , timeoutAmount + safetyMargin
+
+      setTimeout ->
+        expect(foo.bar.calls.count()).toEqual(2 * 1)
+        task.resume()
+      , 2 * timeoutAmount + safetyMargin
+
+      setTimeout ->
+        expect(foo.bar.calls.count()).toEqual(2 * 2)
+        task.abort()
+      , 3 * timeoutAmount + safetyMargin
+
+      setTimeout ->
+        done()
+      , 4 * timeoutAmount + safetyMargin
+      return
+
+    it 'uses `onIdle()` method to signal  all instances are finished and `isIdle()` method to check', (done)->
+      task = new CrunchTask (init, body, fin)->
+        body (resolve)->
+          debugger;
+          do resolve
+        return
+      task.onIdle ()->
+        expect(task.isIdle()).toBe(true)
+        done()
+
+      expect(task.isIdle()).toBe(true)
+      task.run()
+      task.run()
+      expect(task.isIdle()).toBe(false)
+
+      return
+
+    return
+
+
+  describe 'Examples in the readme.md file', ->
+    collatzTask = null
+    beforeEach( ->
+      collatzTask = new CrunchTask (init, body, fin) ->
+        nInit = n = threshold = null
+        totalStoppingTime = 0
+
+        init (_n, _threshold)->
+          nInit = n = _n
+          threshold = _threshold
+
+        body (resolve, reject)->
+          return resolve(nInit, totalStoppingTime) if n is 1
+          return reject(nInit, threshold, n) if n > threshold
+          if (n % 2)
+            n = 3 * n + 1
+          else
+            n = n / 2
+          totalStoppingTime++
+        , 100
+
+        fin (status)->
+          if status is false
+            console.log 'Collatz conjecture breaking candidate:', nInit
+    )
+
+    it 'implements a Collatz conjecture, aka 3n + 1 problem, algorithm', (done)->
+
+      expect(type(done)).toEqual('function')
+
+      collatzTask.onIdle( ()->
+        expect(type(setTimeout)).toBeDefined()
+        expect(type(setTimeout)).toEqual('function')
+        setTimeout done, 100
+        return
       )
 
-      it 'implements a Collatz conjecture, aka 3n + 1 problem, algorithm', (ddone)->
-#        start = new Date() - 0;
+      collatzTask.run(1).done (arr)->
+        [n, count] = arr
+        expect(n).toEqual(1)
+        expect(count).toEqual(0)
+        return
 
-        expect(type(ddone)).toEqual('function')
+      collatzTask.run(6).done (arr)->
+        [n, count] = arr
+        expect(n).toEqual(6)
+        expect(count).toEqual(8)
+        return
 
+      collatzTask.run(63728127).done (arr)->
+        [n, count] = arr
+        expect(n).toEqual(63728127)
+        expect(count).toEqual(949)
+        return
 
-        collatzTask.onIdle( ()->
-          expect(type(setTimeout)).toBeDefined()
-          expect(type(setTimeout)).toEqual('function')
-          setTimeout ddone, 100
-          return
-        )
-
-        collatzTask.run(1).done (arr)->
-          [n, count] = arr
-          expect(n).toEqual(1)
-          expect(count).toEqual(0)
-          return
-
-        collatzTask.run(6).done (arr)->
-          [n, count] = arr
-          expect(n).toEqual(6)
-          expect(count).toEqual(8)
-          return
-
-        collatzTask.run(63728127).done (arr)->
-          [n, count] = arr
-          expect(n).toEqual(63728127)
-          expect(count).toEqual(949)
-          return
-
-        for v, k in [0, 1, 7, 2, 5, 8, 16, 3, 19, 6, 14, 9, 9, 17, 17, 4, 12, 20, 20, 7, 7, 15, 15, 10, 23, 10, 111, 18, 18, 18, 106, 5, 26, 13, 13, 21, 21, 21, 34, 8, 109, 8, 29, 16, 16, 16, 104, 11, 24, 24]
-          ((v, k) ->
-            collatzTask.run(k + 1).done (arr)->
-              [n, count] = arr
+      for v, k in [0, 1, 7, 2, 5, 8, 16, 3, 19, 6, 14, 9, 9, 17, 17, 4, 12, 20, 20, 7, 7, 15, 15, 10, 23, 10, 111, 18, 18, 18, 106, 5, 26, 13, 13, 21, 21, 21, 34, 8, 109, 8, 29, 16, 16, 16, 104, 11, 24, 24]
+        ((v, k) ->
+          collatzTask.run(k + 1).done (arr)->
+            [n, count] = arr
 #              console.log(arr)
-              expect(n).toEqual(k + 1)
-              expect(count).toEqual(v)
-              return
-          )(v, k)
+            expect(n).toEqual(k + 1)
+            expect(count).toEqual(v)
+            return
+          return
+        )(v, k)
 
+      return
+
+    return
+
+  return
+
+return
