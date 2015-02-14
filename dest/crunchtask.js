@@ -206,10 +206,11 @@ if (typeof Promise.prototype.done !== 'function') {
       __slice = [].slice,
       __hasOwnProperty = {}.hasOwnProperty;
 
-  var type = (/**
-   *
-   * @returns {{isFunction(),isArray(),isBoolean(),isNumber(),isUndefined()}}
-   */
+  var type = (
+      /**
+       *
+       * @returns {{isFunction(),isArray(),isBoolean(),isNumber(),isUndefined()}}
+       */
       function(){
 
     var result = {},
@@ -221,14 +222,16 @@ if (typeof Promise.prototype.done !== 'function') {
 
     for (var i = 0, maxI = sourceTypes.length; i < maxI; i++) {
       fullName = __toString.call(sourceTypes[i]);
-      result['is' + fullName.match(classNamePattern)[1]] = (function(fullName){
-        return function(val) {
-          return __toString.call(val) === fullName;
-        };
-      })(fullName);
+      result['is' + fullName.match(classNamePattern)[1]] = getTestFor(fullName);
     }
 
     return result;
+
+    function getTestFor(fullName){
+      return function(val) {
+        return __toString.call(val) === fullName;
+      };
+    }
   })();
 
   function isExecutable(val) {
@@ -625,6 +628,7 @@ if (typeof Promise.prototype.done !== 'function') {
     if (!(this instanceof CrunchTask)) {
       return new CrunchTask(descriptionFn);
     }
+
     if (!type.isFunction(descriptionFn)) {
       error('CrunchTask.ctor', 'Single argument is required: `fn(initFn,bodyFn,finFn)`');
     }
@@ -827,9 +831,8 @@ if (typeof Promise.prototype.done !== 'function') {
       case 2: // fallthrough
       case 3: // fallthrough
       {
-        step = ((rangeLength - ((lastIsBool) ? 1 : 0)) === 3)
-            ? rangeSet[2]
-            : ((rangeSet[0] <= rangeSet[1]) ? 1 : -1);
+        step = (((rangeLength - ((lastIsBool) ? 1 : 0)) === 3) ?
+            rangeSet[2] : ((rangeSet[0] <= rangeSet[1]) ? 1 : -1));
         return {
           from: rangeSet[0],
           current: rangeSet[0],
@@ -845,7 +848,7 @@ if (typeof Promise.prototype.done !== 'function') {
 
       default:
         if (((rangeLength % 2) === 0) && ((rangeLength % 3) === 0)) {
-          error('Ranges', 'Use arrays to split range parts. Cannot determine pattern now.')
+          error('Ranges', 'Use arrays to split range parts. Cannot determine pattern now.');
         } else {
           error('Ranges', 'Use arrays to split range parts properly.');
         }
