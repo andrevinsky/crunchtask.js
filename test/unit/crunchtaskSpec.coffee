@@ -1094,30 +1094,33 @@ describe 'TaskCruncher Spec: ', ->
       )
 
       it 'implements a Collatz conjecture, aka 3n + 1 problem, algorithm', (ddone)->
-        tasksRunning = 0
 #        start = new Date() - 0;
-        collatzTask.onRun ->
-          tasksRunning++
-        collatzTask.always ->
-          tasksRunning--
-          if tasksRunning is 0
-#            console.log(new Date() - start)
-            setTimeout ddone, 100
+
+        expect(type(ddone)).toEqual('function')
+        expect(type(setTimeout)).toBeDefined()
+        expect(type(setTimeout)).toEqual('function')
+
+        collatzTask.onIdle( ()->
+          setTimeout ddone, 100
+        )
 
         collatzTask.run(1).done (arr)->
           [n, count] = arr
           expect(n).toEqual(1)
           expect(count).toEqual(0)
+          return
 
         collatzTask.run(6).done (arr)->
           [n, count] = arr
           expect(n).toEqual(6)
           expect(count).toEqual(8)
+          return
 
         collatzTask.run(63728127).done (arr)->
           [n, count] = arr
           expect(n).toEqual(63728127)
           expect(count).toEqual(949)
+          return
 
         for v, k in [0, 1, 7, 2, 5, 8, 16, 3, 19, 6, 14, 9, 9, 17, 17, 4, 12, 20, 20, 7, 7, 15, 15, 10, 23, 10, 111, 18, 18, 18, 106, 5, 26, 13, 13, 21, 21, 21, 34, 8, 109, 8, 29, 16, 16, 16, 104, 11, 24, 24]
           ((v, k) ->
@@ -1126,5 +1129,6 @@ describe 'TaskCruncher Spec: ', ->
 #              console.log(arr)
               expect(n).toEqual(k + 1)
               expect(count).toEqual(v)
+              return
           )(v, k)
 
