@@ -8,6 +8,6 @@ before_script:
   - npm install -g bower
   - npm install -g chrome karma@canary phantomjs karma-phantomjs-launcher
 #  - npm install -g harp
-  - bower install
   - npm install
+  - bower install
 script: grunt test
