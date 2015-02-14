@@ -1118,7 +1118,11 @@ describe 'TaskCruncher Spec: ', ->
 
       collatzTask.onIdle ddone
 
-      collatzTask.run(1).done (arr)->
+      runTask1 = collatzTask.run(1)
+      expect(runTask1).toBeDefined()
+      expect(runTask1.done).toBeDefined()
+      expect(type(runTask1.done)).toEqual('function')
+      runTask1.done (arr)->
         [n, count] = arr
         expect(n).toEqual(1)
         expect(count).toEqual(0)

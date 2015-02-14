@@ -1076,8 +1076,13 @@
         });
       });
       it('implements a Collatz conjecture, aka 3n + 1 problem, algorithm', function(ddone) {
+        var runTask1;
         collatzTask.onIdle(ddone);
-        collatzTask.run(1).done(function(arr) {
+        runTask1 = collatzTask.run(1);
+        expect(runTask1).toBeDefined();
+        expect(runTask1.done).toBeDefined();
+        expect(type(runTask1.done)).toEqual('function');
+        runTask1.done(function(arr) {
           var count, n;
           n = arr[0], count = arr[1];
           expect(n).toEqual(1);
