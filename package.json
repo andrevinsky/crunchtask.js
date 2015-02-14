@@ -1,6 +1,6 @@
 {
   "name": "crunchtask",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "description": "A library that executes long-running tasks without freezing of a machine and employs an easy usage pattern ",
   "main": "lib/crunchtask.js",
   "scripts": {
