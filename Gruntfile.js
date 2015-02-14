@@ -44,7 +44,13 @@ module.exports = function(grunt) {
         src: 'dest/<%= pkg.name %>.js',
         dest: 'dest/<%= pkg.name %>.min.js'
       }
-		}
+		},
+
+    karma: {
+      unit: {
+        configFile: 'karma.conf.js'
+      }
+    }
 
 	});
 
@@ -52,6 +58,11 @@ module.exports = function(grunt) {
 	grunt.loadNpmTasks('grunt-contrib-uglify');
 
   grunt.loadNpmTasks('grunt-bump');
+
+  grunt.loadNpmTasks('grunt-karma');
+
+
+  grunt.registerTask('test', ['karma']);
 
 	grunt.registerTask('build', ['concat:browser', 'uglify:browser']);
 	grunt.registerTask('bump-minor', ['bump:minor']);
