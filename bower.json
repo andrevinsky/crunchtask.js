@@ -4,8 +4,8 @@
   "authors": [
     { "name": "Andrew Revinsky", "email": "arevinsky@gmail.com" }
   ],
-  "description": "A library that executes long-running tasks without freezing of a browser and emloys an easy usage pattern ",
-  "main": "lib/crunchtask.js",
+  "description": "A library that executes long-running tasks without freezing of a browser and employs an easy usage pattern ",
+  "main": "dest/crunchtask.js",
   "keywords": [
     "crunch",
     "task",
@@ -24,9 +24,7 @@
     "url": "https://github.com/AndrewRevinsky/crunchtask.js.git"
   },
   "dependencies": {
-    "promise-polyfill": "~1.1.4",
-    "promise-done-6.0.0": "https://www.promisejs.org/polyfills/promise-done-6.0.0.js",
-    "promise-done-6.0.0.min": "https://www.promisejs.org/polyfills/promise-done-6.0.0.min.js"
+    "promise-polyfill": "~1.1.4"
   },
   "devDependencies": {
     "jasmine": "~2.1.2",
