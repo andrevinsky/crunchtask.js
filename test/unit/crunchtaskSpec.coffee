@@ -1154,5 +1154,3 @@ describe 'TaskCruncher Spec: ', ->
     return
 
   return
-
-return
