@@ -68,9 +68,12 @@ module.exports = function(config) {
     singleRun: true,
     browserNoActivityTimeout: 100000,
 
-    //plugins : [
+    plugins : ['karma-*'],
+    //plugins :
+        //[
     //  //'karma-junit-reporter',
     //  'karma-chrome-launcher',
+    //  'karma-phantomjs-launcher'
     //  //'karma-firefox-launcher',
     //  //'karma-opera-launcher',
     //  //'karma-ie-launcher',
