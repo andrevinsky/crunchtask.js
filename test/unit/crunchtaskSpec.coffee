@@ -1,20 +1,39 @@
 #http://jasmine.github.io/edge/introduction.html
 #http://coffeescript.org/
+type = do ->
+  classToType = {}
+  for prop in 'Boolean Number String Function Array Date RegExp Object'.split(' ')
+    do (prop) ->
+      classToType["[object #{prop}]"] = prop.toLowerCase()
+  (obj) ->
+    if obj == undefined or obj == null
+      return String obj
+    return classToType[Object::toString.call(obj)]
+
+CrunchTask = CrunchTask
+Promise = Promise
+
+if (typeof require == 'function')
+  CrunchTask = require('../../lib/crunchtask')
+  Promise = require('../../node_modules/promise-polyfill/Promise')
+
+if typeof Promise::done != 'function'
+  Promise::done = (onFulfilled, onRejected) ->
+    self = if arguments.length then @then.apply(this, arguments) else this
+    self.then null, (err) ->
+      setTimeout (->
+        throw err
+        return
+      ), 0
+      return
+    return
+
+
 describe 'TaskCruncher Spec: ', ->
 
   it 'Use Jasmine with Version 2.xx', ->
     expect(jasmine.version).toMatch(/^2\./);
     return
-
-  type = do ->
-    classToType = {}
-    for prop in 'Boolean Number String Function Array Date RegExp Object'.split(' ')
-      do (prop) ->
-        classToType["[object #{prop}]"] = prop.toLowerCase()
-    (obj) ->
-      if obj == undefined or obj == null
-        return String obj
-      return classToType[Object::toString.call(obj)]
 
   describe 'Declaration: ', ->
     it 'declares a type CrunchTask on the global scope', ->
@@ -150,7 +169,7 @@ describe 'TaskCruncher Spec: ', ->
       expect(foo.bar.calls.any()).toEqual(false)
       task.run()
 
-      window.setTimeout(() ->
+      setTimeout(() ->
         expect(foo.bar.calls.any()).toEqual(true)
         expect(foo.bar.calls.argsFor(0)[0] instanceof Error).toEqual(true);
         done()
@@ -554,7 +573,7 @@ describe 'TaskCruncher Spec: ', ->
           return
 
         it 'if no function is supplied, the loop resolves automatically when started', (done)->
-          spyOn(foo, 'bar')
+          spyOn(foo, 'bar').and.callThrough()
           forLoop = CrunchTask.for()
           forLoop.done(foo.bar)
 
@@ -565,7 +584,7 @@ describe 'TaskCruncher Spec: ', ->
           setTimeout(()->
             expect(foo.bar.calls.any()).toEqual(true)
             done()
-          , 10)
+          , 100)
           return
 
         return
@@ -819,6 +838,7 @@ describe 'TaskCruncher Spec: ', ->
         (arg1, arg2, arg3) ->
           expect(arg1).toBeDefined()
           do done
+          return
       )
       task.run()
       return
@@ -916,6 +936,7 @@ describe 'TaskCruncher Spec: ', ->
 
       task.always ->
         expect(foo.bar.calls.any()).toEqual(true)
+        return
 
       expect(foo.bar.calls.any()).toEqual(false)
 
@@ -927,6 +948,7 @@ describe 'TaskCruncher Spec: ', ->
         expect(memo[1]).toEqual(1)
         expect(memo[2]).toEqual(1)
         result1.abort()
+        return
       , timeoutAmount + safetyMargin
 
       setTimeout ->
@@ -934,6 +956,7 @@ describe 'TaskCruncher Spec: ', ->
         expect(memo[1]).toEqual(1)
         expect(memo[2]).toEqual(2)
         result1.resume()
+        return
       , 2 * timeoutAmount + safetyMargin
 
       setTimeout ->
@@ -941,10 +964,12 @@ describe 'TaskCruncher Spec: ', ->
         expect(memo[1]).toEqual(1)
         expect(memo[2]).toEqual(3)
         task.abort()
+        return
       , 3 * timeoutAmount + safetyMargin
 
       setTimeout ->
         done()
+        return
       , 4 * timeoutAmount + safetyMargin
       return
 
@@ -959,6 +984,7 @@ describe 'TaskCruncher Spec: ', ->
       task = new CrunchTask (init, body, fin)->
         body moo.bar
 
+      expect(moo.bar.calls.any).toBeDefined()
       expect(moo.bar.calls.any()).toEqual(false)
 
       task.always ()->
@@ -969,7 +995,7 @@ describe 'TaskCruncher Spec: ', ->
       result2 = task.run();
       task.abort()
 
-      window.setTimeout done, 100
+      setTimeout done, 100
       return
 
 
