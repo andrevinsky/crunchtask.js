@@ -151,13 +151,12 @@ describe 'TaskCruncher Spec: ', ->
       task.run()
 
       window.setTimeout(() ->
-          expect(foo.bar.calls.any()).toEqual(true)
-          expect(foo.bar.calls.argsFor(0)[0] instanceof Error).toEqual(true);
-          done()
+        expect(foo.bar.calls.any()).toEqual(true)
+        expect(foo.bar.calls.argsFor(0)[0] instanceof Error).toEqual(true);
+        done()
+        return
       , 1000)
       return
-
-    return
 
     describe 'some instance methods can be chained', ()->
       task = null
@@ -444,6 +443,13 @@ describe 'TaskCruncher Spec: ', ->
           expect(CrunchTask.rangeNextAndCheck(range)).toBe(true)
           expect(CrunchTask.rangeNextAndCheck(range)).toBe(false)
           return
+        it 'doesn\'t work this way if `inclusive` isn\'t set to `true`', ()->
+          range = CrunchTask.rangeCheck(0, 1, false, 0, 1, false)
+          expect(CrunchTask.rangeNextAndCheck(range)).toBe(false)
+          expect(CrunchTask.rangeNextAndCheck(range)).toBe(false)
+          expect(CrunchTask.rangeNextAndCheck(range)).toBe(false)
+          expect(CrunchTask.rangeNextAndCheck(range)).toBe(false)
+          return
 
         return
 
@@ -474,8 +480,11 @@ describe 'TaskCruncher Spec: ', ->
             expect(foo.bar).toHaveBeenCalled()
             expect(foo.bar.calls.count()).toEqual(2)
             expect(foo.bar.calls.argsFor(0)).toEqual([0])
+            expect(foo.bar.calls.argsFor(1)).toEqual([1])
+            expect(foo.bar.calls.argsFor(2)).toEqual([])
+            expect(foo.bar.calls.argsFor(2)).toEqual([])
             done()
-          , 10)
+          , 100)
 
           return
 
@@ -498,7 +507,7 @@ describe 'TaskCruncher Spec: ', ->
             expect(foo.bar.calls.argsFor(3)).toEqual([3])
             expect(foo.bar.calls.argsFor(4)).toEqual([4])
             done()
-          , 10)
+          , 100)
 
           return
 

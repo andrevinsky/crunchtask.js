@@ -22,7 +22,7 @@
   },
   "homepage": "https://github.com/AndrewRevinsky/crunchtask.js",
   "readmeFilename": "README.md",
-  "gitHead": "924f813a63d4a7db3ad5e1ed50630a4ebb52c3f6",
+  "gitHead": "555aabbc66b9e6cb26dc3096705cc1d2f5560783",
   "devDependencies": {
     "karma-coffee-preprocessor": "^0.2.1",
     "jasmine-core": "~2.1.3",
