@@ -59,7 +59,7 @@ module.exports = function(config) {
 
     // start these browsers
     // available browser launchers: https://npmjs.org/browse/keyword/karma-launcher
-    browsers: ['Chrome'],
+    browsers: ['Chrome', 'PhantomJS', 'Firefox', 'IE' ],
 
 
 
@@ -68,12 +68,17 @@ module.exports = function(config) {
     singleRun: true,
     browserNoActivityTimeout: 100000,
 
-    plugins : ['karma-*'],
+    plugins : ['karma-*', //],
+      'karma-jasmine',
+      'karma-phantomjs-launcher',
+      'karma-ie-launcher',
+      'karma-firefox-launcher',
     //plugins :
         //[
     //  //'karma-junit-reporter',
     //  'karma-chrome-launcher',
-    //  'karma-phantomjs-launcher'
+      'karma-phantomjs-launcher'
+        ],
     //  //'karma-firefox-launcher',
     //  //'karma-opera-launcher',
     //  //'karma-ie-launcher',
@@ -92,7 +97,7 @@ module.exports = function(config) {
       // options passed to the coffee compiler
       options: {
         bare: true,
-        sourceMap: false
+        sourceMap: true
       },
       // transforming the filenames
       transformPath: function(path) {
@@ -102,7 +107,7 @@ module.exports = function(config) {
   });
 
   if(process.env.TRAVIS){
-    config.browsers = ['Chrome_travis_ci'];
+    config.browsers = ['Chrome_travis_ci', 'PhantomJS'];
   }
 
 };

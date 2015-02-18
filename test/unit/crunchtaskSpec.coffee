@@ -17,19 +17,7 @@ if (typeof require == 'function')
   CrunchTask = require('../../lib/crunchtask')
   Promise = require('../../node_modules/promise-polyfill/Promise')
 
-if typeof Promise::done != 'function'
-  Promise::done = (onFulfilled, onRejected) ->
-    self = if arguments.length then @then.apply(this, arguments) else this
-    self.then null, (err) ->
-      setTimeout (->
-        throw err
-        return
-      ), 0
-      return
-    return
-
-
-describe 'TaskCruncher Spec: ', ->
+describe 'TaskCruncher Specification ', ->
 
   it 'Use Jasmine with Version 2.xx', ->
     expect(jasmine.version).toMatch(/^2\./);
