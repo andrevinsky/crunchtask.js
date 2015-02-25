@@ -10,6 +10,18 @@ type = do ->
       return String obj
     return classToType[Object::toString.call(obj)]
 
+whenAll = (args..., thenFn)->
+  count = args.length
+  callback = () ->
+    count--
+    if !count then return thenFn()
+
+  if !count then return thenFn()
+  for arg, idx in args
+    arg callback
+
+Math.log10 = `function (x) { return Math.log(x) / Math.LN10; };`
+
 CrunchTask = CrunchTask
 Promise = Promise
 
@@ -20,6 +32,7 @@ if (typeof require == 'function')
 describe 'TaskCruncher Specification ', ->
 
   it 'Use Jasmine with Version 2.xx', ->
+    console.log "jasmine.version= #{jasmine.version}"
     expect(jasmine.version).toMatch(/^2\./);
     return
 
@@ -580,221 +593,295 @@ describe 'TaskCruncher Specification ', ->
       return
 
 
-  describe 'Usage Patterns: ', ->
+  fdescribe 'Usage Patterns: ', ->
     task = null
 
     beforeEach () ->
-      task = new CrunchTask (init, body, fin)->
-        return
+      console.log " jasmine.DEFAULT_TIMEOUT_INTERVAL = #{ jasmine.DEFAULT_TIMEOUT_INTERVAL}"
 
-    it 'uses a simple construction function', ->
-      result = new CrunchTask (init, body, fin)->
-        expect(true).toEqual(true)
+    it 'uses a simple function called `description function` to _describe_ the task\'s initialization, body, and finalization. It is called only when the task is run.', ->
+      debugger;
+      foo = {
+        ctor:  (init, body, fin)->
+      }
+
+      spyOn(foo, 'ctor').and.callThrough()
+
+      result = new CrunchTask foo.ctor
+      expect(foo.ctor).not.toHaveBeenCalled()
       result.run()
+      expect(foo.ctor).toHaveBeenCalled()
+      return
 
-    it '..which expects the tree arguments (`init, body, fin`) to be functions', (done) ->
-      result = new CrunchTask (init, body, fin)->
+    it 'when task is run, the `description function` receives the tree functions as parameters (`init`, `body`, `fin`)', (done) ->
+      task = new CrunchTask (init, body, fin)->
+
         expect(init).toBeDefined()
         expect(type(init)).toEqual('function')
+
         expect(body).toBeDefined()
         expect(type(body)).toEqual('function')
+
         expect(fin).toBeDefined()
         expect(type(fin)).toEqual('function')
+
         done()
         return
-      result.run()
 
-    it 'uses `init` function to inject runtime values into execution scope. Sample 1 - Empty', (done) ->
-      result = new CrunchTask (init, body, fin)->
-        init((arg1)->
+      task.run()
+      return
+
+    it 'The first parameter, `init`, called an _init setup_, expects a single parameter, called an _init function_. Which is a means to inject runtime values into execution scope. Runtime values are passed into the _init function_ via the `run(args)` method.', (done) ->
+      task1 = new CrunchTask (init, body, fin)->
+        init (arg1, arg2)->
           expect(arg1).not.toBeDefined()
-          done()
-        )
+          expect(arg2).not.toBeDefined()
+          return
         return
-      result.run()
 
-    it 'uses `init` function to inject runtime values into execution scope. Sample 2 - One arg', (done) ->
-      result = new CrunchTask (init, body, fin)->
-        init((arg1)->
+      task2 = new CrunchTask (init, body, fin)->
+        init (arg1, arg2)->
           expect(arg1).toBeDefined()
           expect(arg1).toEqual(123)
-          done()
-        )
-        body(()->
-          throw new Error('stop'))
+          expect(arg2).not.toBeDefined()
+          return
         return
-      result.run(123)
 
-    it 'uses `init` function to inject runtime values into execution scope. Sample 3 - Few args', (done) ->
-      result = new CrunchTask (init, body, fin)->
-        init((arg1, arg2)->
+      task3 = new CrunchTask (init, body, fin)->
+        init (arg1, arg2)->
           expect(arg1).toBeDefined()
-          expect(arg1).toEqual(123)
+          expect(arg1).toEqual(1234)
+
           expect(arg2).toBeDefined()
-          expect(arg2).toEqual('456')
-          done()
-        )
-        body(()->
-          throw new Error('stop'))
+          expect(arg2).toEqual('X456')
+          return
         return
-      result.run(123, '456')
 
-    it 'allows `body` function to operate on values injected with `init`', (done)->
+      whenAll task1.onIdle, task2.onIdle, task3.onIdle, done
+
+      task1.run()
+      task2.run(123)
+      task3.run(1234, 'X456')
+      return
+
+
+    it 'The `body` parameter, or _body setup_, expects a single function, called the _body function_, which operates on values injected with the `init`', (done)->
       task = new CrunchTask (init, body, fin)->
-        result = null
-        init((arg1)->
-          result = arg1
-        )
-        body(()->
+        # Declaration
+        arg1 = null
+        arg2 = null
+
+        init (_arg1, _arg2)->
+          # Assignemnt
+          arg1 = _arg1
+          arg2 = _arg2
+          return
+
+        body (resolve)->
+          # Operations
+          result = arg1 + arg2
           expect(result).toBeDefined()
-          expect(result).toEqual(123)
+          expect(result).toEqual(123 + 456)
+
           done()
-          throw new Error('stop')
-        )
+          resolve()
+          return
         return
-      task.run(123)
 
-#    xit 'uses `body` function to describe main logic and control its flow with three c/backs'
+      task.run(123, 456)
+      return
 
-    it 'uses `body` to control flow with two c/backs (`resolve, reject`). Sample - resolve', (done) ->
-      task = new CrunchTask (init, body, fin)->
-        body((resolve, reject, notify)->
+    it 'The _body function_ controls the flow with two callbacks passed into it: `resolve` and `reject`.', (done) ->
+
+      task1 = new CrunchTask (init, body, fin)->
+        body (resolve, reject, notify)->
           resolve(123)
-        )
+          return
         return
-      task.run().then(
-        ((arg) ->
-          expect(arg).toEqual([123])
-          done()
-          return),
-        () -> return
-      )
 
-    it 'uses `body` to control flow with two c/backs (`resolve, reject`). Sample - reject', (done) ->
-      task = new CrunchTask (init, body, fin)->
-        body((resolve, reject, notify)->
+      task2 = new CrunchTask (init, body, fin)->
+        body (resolve, reject, notify)->
           reject(123)
-        )
+          return
         return
-      task.run().then(
-        () -> return,
-        ((arg) ->
-          expect(arg).toEqual([123])
-          done()
-          return)
-      )
 
-    it 'executes only once, when the second parameter to the `body` callback is `false`', (done)->
+      whenAll task1.onIdle, task2.onIdle, ()->
+        setTimeout done, 10
+
+      resolveCallback = (arg) ->
+        expect(arg).toEqual([123])
+        return
+
+      rejectCallback = (arg) ->
+        expect(arg).toEqual([123])
+        return
+
+      task1.run().then resolveCallback
+      task2.run().then (() ->), rejectCallback
+
+    it 'the second parameter to the _body setup_ function makes the _body_ to execute only once, if is equal to `false`', (done)->
       foo = {
         bar: (resolve, reject) ->
       }
-
-      setTimeout(done, 5000)
-
       spyOn(foo, 'bar').and.callThrough()
 
-      task = new CrunchTask((init, body, fin)->
-        body(foo.bar, false)
-        fin(done)
+      task = new CrunchTask (init, body, fin)->
+        body foo.bar, false # note the reject is never called
+        fin done
         return
-      )
 
-      task.always(()->
+      expect(foo.bar.calls.any()).toEqual(false)
+
+      task.onIdle ()->
         expect(foo.bar.calls.any()).toEqual(true)
         expect(foo.bar.calls.count()).toEqual(1)
         done()
-      )
+        return
 
-      expect(foo.bar.calls.any()).toEqual(false)
       task.run()
+      return
 
-    it 'packs execution of the `body` c/back under the amount of passed ms, if possible', (done)->
-
+    it 'Packs as many runs of the _body_ per specified amount of ms as possible. The amount is passed as a second parameter to the _body setup_', (done)->
       foo = {
-        bar: (() ->
-        )
+        bar: () ->
       }
       spyOn(foo, 'bar').and.callThrough()
 
       batchExecTimeLimitMilliseconds = 100
+      runCount = 250000
 
-      task = new CrunchTask((init, body, fin)->
-        count = 250
-        started = 0
-        init((_started) -> started = _started)
-        body((resolve, reject, notify, diag)->
-          foo.bar(diag.batchStarted - 0, diag.batchIndex, diag.batchElapsed)
-          if (!(--count))
-            resolve()
+      task = new CrunchTask (init, body, fin)->
+        # Declaration, pre-initialization
+        count = 0
 
-        , batchExecTimeLimitMilliseconds)
+        init (_count) ->
+          # Assignment
+          count = _count
+          return
+
+        body (resolve, reject, notify, diag)->
+#          console.log diag.runBlock
+          foo.bar(diag.batchStarted - 0, diag.batchIndex, diag.batchElapsed, diag.runBlock)
+          resolve() unless (--count)
+          return
+
+        , batchExecTimeLimitMilliseconds
         return
-      )
 
-      task.always(()->
-        expect(foo.bar.calls.count()).toEqual(250);
-        for i in [0...foo.bar.calls.count()]
-          expect(foo.bar.calls.argsFor(i)[2]).toBeLessThan(batchExecTimeLimitMilliseconds)
-        for i in [1...foo.bar.calls.count()]
-          expect(foo.bar.calls.argsFor(i)[0]).toEqual(foo.bar.calls.argsFor(i - 1)[0]) if foo.bar.calls.argsFor(i)[1] > foo.bar.calls.argsFor(i - 1)[1]
+      task.onIdle ()->
+        callsCount = foo.bar.calls.count()
+        batchUsed = {}
+        batchCount = 0
+
+        getBatchStarted = (idx) ->
+          foo.bar.calls.argsFor(idx)[0]
+
+        getBatchIndex = (idx) ->
+          foo.bar.calls.argsFor(idx)[1]
+
+        getBatchElapsed = (idx) ->
+          foo.bar.calls.argsFor(idx)[2]
+
+        expect(callsCount).toEqual(runCount);
+
+        for idx in [0...callsCount]
+          expect(getBatchElapsed(idx)).toBeLessThan(batchExecTimeLimitMilliseconds)
+
+          batchStarted = getBatchStarted(idx)
+
+          batchCount++ unless batchUsed[batchStarted]
+          batchUsed[batchStarted] = true
+
+        for i in [1...callsCount]
+          # start time is equal for consecutive calls in a single batch
+          areAdjacentBatchCalls = getBatchIndex(i - 1) < getBatchIndex(i)
+          expect(getBatchStarted(i)).toEqual(getBatchStarted(i - 1)) if areAdjacentBatchCalls
+
+        expect(batchCount).toBeGreaterThan(1)
 
         done()
-      )
+        return
 
-      task.run((new Date() - 0))
+      task.run( runCount )
+      return
 
-    it 'spaces execution of the `body` c/back for the amount passed in the third parameter', (done)->
+    it 'Spaces execution of the _body function_ for the amount passed in the third parameter', (done)->
       foo = {
-        bar: (() ->
-        )
+        bar: ()->
       }
       spyOn(foo, 'bar').and.callThrough()
+
       executionTimeout = 500
-      task = new CrunchTask((init, body, fin)->
+
+      task = new CrunchTask (init, body, fin)->
         count = 2
-        started = 0
-        init((_started) -> started = _started)
-        body((resolve, reject, notify, diag)->
-          foo.bar(diag.batchStarted)
-          if (!(count--))
-            resolve()
-        , 0, executionTimeout)
+
+        init (started) ->
+          foo.bar(started - 0)
+          return
+
+        body (resolve, reject, notify, diag)->
+          foo.bar(diag.batchStarted - 0)
+
+          resolve() unless (--count)
+          return
+
+        , 0, executionTimeout
+
         return
-      )
-      started = new Date() - 0
+
       task.done ->
-        expect(Math.abs( started - foo.bar.calls.argsFor(0)[0])).toBeGreaterThan(executionTimeout - 1)
-        expect(Math.abs( foo.bar.calls.argsFor(0)[0] - foo.bar.calls.argsFor(1)[0])).toBeGreaterThan(executionTimeout - 1)
+        batchStarted0 = foo.bar.calls.argsFor(0)[0]
+        batchStarted1 = foo.bar.calls.argsFor(1)[0]
+        batchStarted2 = foo.bar.calls.argsFor(2)[0]
+
+        timeoutForBatch1 = Math.abs(batchStarted1 - batchStarted0)
+        timeoutForBatch2 = Math.abs(batchStarted2 - batchStarted1)
+
+        precision = -Math.log10( 25 * 2)
+        expect(timeoutForBatch1).toBeCloseTo(executionTimeout, precision)
+        expect(timeoutForBatch2).toBeCloseTo(executionTimeout, precision)
+
         done()
-      task.run()
-
-    it 'wraps all arguments into an array for Promise endpoints, unwraps for own handlers. Sample - resolve', (done) ->
-      task = new CrunchTask (init, body, fin)->
-        body((resolve, reject, notify)->
-          resolve(123)
-        )
         return
-      task.done(
-        (arg) ->
-          expect(arg).toEqual(123)
-          done()
-          return
-      )
-      task.run()
 
-    it 'wraps all arguments into an array for Promise endpoints, unwraps for own handlers. Sample - reject', (done) ->
-      task = new CrunchTask (init, body, fin)->
-        body((resolve, reject, notify)->
-          reject(123)
-        )
-        return
-      task.fail(
-        (arg) ->
-          expect(arg).toEqual(123)
-          done()
+      task.run(new Date())
+
+      return
+
+    it 'Tasks results parameters (supplied for `resolve`/`reject`) are wrapped into an array for Promise resolve/reject listeners, unwrapped for Task\'s result handlers.', (done) ->
+      task1 = new CrunchTask (init, body, fin)->
+
+        body (resolve, reject, notify)->
+          resolve 123
           return
-      )
-      task.run()
+        return
+
+      task2 = new CrunchTask (init, body, fin)->
+        body (resolve, reject, notify)->
+          reject 456
+          return
+        return
+
+      task1.done (arg) ->
+        expect(arg).toEqual(123)
+        return
+
+      task2.fail (arg) ->
+        expect(arg).toEqual(456)
+        return
+
+      whenAll(task1.onIdle, task2.onIdle, done)
+
+      task1.run().done (arg) ->
+        expect(arg).toEqual([123])
+        return
+
+      task2.run().fail (arg) ->
+        expect(arg).toEqual([456])
+        return
+
+      return
 
     it 'allows to subscribe to `onRun` handler', ->
       spyOn(task, 'onRun').and.callThrough()
@@ -803,14 +890,15 @@ describe 'TaskCruncher Specification ', ->
         (arg1, arg2, arg3) ->
           return)
 
-      expect(task.onRun).toHaveBeenCalled();
-#      do done
+      expect(task.onRun).toHaveBeenCalled()
+      return
 
     it 'triggers `onRun` handlers when `run()` is called', (done)->
       task.onRun(
         (arg1, arg2, arg3) ->
           do done)
       task.run()
+      return
 
     it 'allows to subscribe to completion `done` handler', ->
       spyOn(task, 'done').and.callThrough()
@@ -818,7 +906,8 @@ describe 'TaskCruncher Specification ', ->
         (arg1, arg2, arg3) ->
           return)
 
-      expect(task.done).toHaveBeenCalled();
+      expect(task.done).toHaveBeenCalled()
+      return
 
     it 'always triggers `always` handlers when completion is reached', (done)->
       task = new CrunchTask ( -> )
@@ -865,7 +954,7 @@ describe 'TaskCruncher Specification ', ->
       jasmine.DEFAULT_TIMEOUT_INTERVAL = originalTimeout
       return
 
-    it 'uses `body`/`notify` c/back to notify listeners of the progress of the task', ((done) ->
+    it 'uses `body`/`notify` c/back to notify listeners of the progress of the task', (done) ->
       foo = {
         bar: (() ->
         )
@@ -891,16 +980,14 @@ describe 'TaskCruncher Specification ', ->
 
       task.run()
 
-      task.always(()->
+      task.always ()->
         expect(foo.bar.calls.any()).toEqual(true)
         expect(foo.bar.calls.count()).toEqual(runCycles)
         expect(foo.bar.calls.argsFor(0)).toEqual(['const', runCycles])
         expect(foo.bar.calls.argsFor(runCycles - 1)).toEqual(['const', 1])
         done()
         return
-      )
       return
-    )
 
     it 'uses `abort` method called on `run` result to abort execution of a run-instance', (done)->
       memo = {}
@@ -959,6 +1046,7 @@ describe 'TaskCruncher Specification ', ->
         done()
         return
       , 4 * timeoutAmount + safetyMargin
+
       return
 
 
@@ -1089,7 +1177,6 @@ describe 'TaskCruncher Specification ', ->
     it 'uses `onIdle()` method to signal  all instances are finished and `isIdle()` method to check', (done)->
       task = new CrunchTask (init, body, fin)->
         body (resolve)->
-          debugger;
           do resolve
         return
       task.onIdle ()->
