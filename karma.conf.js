@@ -18,6 +18,7 @@ module.exports = function(config) {
        'bower_components/promise-polyfill/Promise.js',
        'bower_components/promise-done-6.0.0/index.js',
       'lib/*.js',
+      'test/unit/utils.coffee',
       'test/**/*Spec.coffee'
     ],
 
