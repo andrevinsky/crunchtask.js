@@ -27,3 +27,5 @@ whenAll = ((args..., thenFn)->
 )
 
 root.whenAll = whenAll
+
+console.log "UTILS LOADED"

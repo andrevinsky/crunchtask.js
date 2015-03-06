@@ -8,7 +8,6 @@ root = typeof window is 'object' && window ? window : global
 type = root.type
 whenAll = root.whenAll
 
-
 if (typeof require == 'function')
   CrunchTask = require('../../lib/crunchtask')
   Promise = require('../../node_modules/promise-polyfill/Promise')
@@ -410,7 +409,7 @@ describe 'TaskCruncher Specification ', ->
         timeoutForBatch1 = Math.abs(batchStarted1 - batchStarted0)
         timeoutForBatch2 = Math.abs(batchStarted2 - batchStarted1)
 
-        precision = -Math.log10( 25 * 2) # +/-25ms
+        precision = -Math.log10( 100 * 2) # +/-100ms
         expect(timeoutForBatch1).toBeCloseTo(executionTimeout, precision)
         expect(timeoutForBatch2).toBeCloseTo(executionTimeout, precision)
 
