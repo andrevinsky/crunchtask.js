@@ -4,6 +4,11 @@ Math.log10 = `function (x) { return Math.log(x) / Math.LN10; };`
 CrunchTask = CrunchTask
 Promise = Promise
 
+root = typeof window is 'object' && window ? window : global
+type = root.type
+whenAll = root.whenAll
+
+
 if (typeof require == 'function')
   CrunchTask = require('../../lib/crunchtask')
   Promise = require('../../node_modules/promise-polyfill/Promise')
@@ -57,6 +62,8 @@ describe 'TaskCruncher Specification ', ->
 
         expect(body).toBeDefined()
         expect(type(body)).toEqual('function')
+        body ()->
+          return
 
         expect(fin).toBeDefined()
         expect(type(fin)).toEqual('function')
@@ -64,7 +71,7 @@ describe 'TaskCruncher Specification ', ->
         done()
         return
 
-      task.run()
+      task.run().abort()
       return
 
     it 'The _init setup_ function (`init` parameter) expects to be called with a single parameter, called an _init function_. It provides the means to inject runtime values (passed to the the `task.run(args...)` method) into the common execution scope. This scope is found under the _description function_.', (done) ->
@@ -279,7 +286,7 @@ describe 'TaskCruncher Specification ', ->
 
           done()
           return
-        , 10
+        , 100
         return
 
       return
@@ -539,7 +546,7 @@ describe 'TaskCruncher Specification ', ->
         done()
 
         return
-      , 10
+      , 100
 
       return
 

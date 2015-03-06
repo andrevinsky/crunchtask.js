@@ -5,6 +5,11 @@ if (typeof require == 'function')
   CrunchTask = require('../../lib/crunchtask')
   Promise = require('../../node_modules/promise-polyfill/Promise')
 
+
+root = typeof window is 'object' && window ? window : global
+type = root.type
+whenAll = root.whenAll
+
 describe 'CrunchTask API Spec.', ->
 
   describe 'API. CrunchTask instance..', ->
@@ -187,8 +192,12 @@ describe 'CrunchTask API Spec.', ->
 
     it 'Here a sample task description that doesn\'t generate error', (done)->
       foo = {
-        errorTaskOkHandler: ()->
-        errorRunTaskOkHandler: ()->
+        errorTaskOkHandler: (arg1, arg2)->
+          console.info(arg1, arg2)
+          return
+        errorRunTaskOkHandler: (arg1, arg2)->
+          console.info(arg1, arg2)
+          return
       }
       spyOn(foo, 'errorTaskOkHandler').and.callThrough()
       spyOn(foo, 'errorRunTaskOkHandler').and.callThrough()
@@ -475,7 +484,7 @@ describe 'CrunchTask API Spec.', ->
         expect(foo.errorRunHandler.calls.argsFor(0)[0]).toEqual('CrunchTask.description.init')
 
         done()
-      ,10
+      ,100
       return
 
     return
