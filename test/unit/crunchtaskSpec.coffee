@@ -4,13 +4,14 @@ Math.log10 = `function (x) { return Math.log(x) / Math.LN10; };`
 CrunchTask = CrunchTask
 Promise = Promise
 
-root = typeof window is 'object' && window ? window : global
-type = root.type
-whenAll = root.whenAll
-
-if (typeof require == 'function')
+if (typeof require is 'function')
   CrunchTask = require('../../lib/crunchtask')
   Promise = require('../../node_modules/promise-polyfill/Promise')
+  utils = require('./utils.coffee')
+
+root = typeof window is 'object' && window ? window : global
+type = root.type || utils.type
+whenAll = root.whenAll || utils.whenAll
 
 describe 'TaskCruncher Specification ', ->
 

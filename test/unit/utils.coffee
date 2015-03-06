@@ -28,4 +28,10 @@ whenAll = ((args..., thenFn)->
 
 root.whenAll = whenAll
 
+if (typeof module isnt 'undefined' && module.exports)
+  module.exports = {
+    type: type,
+    whenAll: whenAll
+  }
+
 console.log "UTILS LOADED"
