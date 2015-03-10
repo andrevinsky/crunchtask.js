@@ -1,6 +1,6 @@
 {
   "name": "crunchtask",
-  "version": "0.6.0",
+  "version": "0.7.0",
   "authors": [
     {
       "name": "Andrew Revinsky",
@@ -27,8 +27,7 @@
     "url": "https://github.com/AndrewRevinsky/crunchtask.js.git"
   },
   "dependencies": {
-    "promise-polyfill": "~1.1.4",
-    "promise-done-6.0.0": "https://www.promisejs.org/polyfills/promise-done-6.0.0.js"
+    "promise-polyfill": "~1.1.4"
   },
   "devDependencies": {
     "jasmine": "~2.2.1"

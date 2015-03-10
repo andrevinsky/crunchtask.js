@@ -190,6 +190,10 @@
  */
 (function (){
 
+  'use strict';
+
+  /* jshint -W040 */
+
   var root = typeof window === 'object' && window ? window : global,
       __slice = [].slice,
       __hasOwnProperty = {}.hasOwnProperty;
@@ -225,10 +229,21 @@
     }
   })();
 
+  /**
+   *
+   * @param val
+   * @returns {boolean}
+   */
   function isExecutable(val) {
     return type.isFunction(val) || (val instanceof CrunchTask);
   }
 
+  /**
+   *
+   * @throws Error
+   * @param errType
+   * @param msg
+   */
   function error(errType, msg){
     if (type.isUndefined(msg)){
       msg = errType;
@@ -256,7 +271,7 @@
   }
 
   /**
-   * @deprecated
+   * @deprecated use range
    * @type {staticFor}
    */
   CrunchTask.for = staticFor;
@@ -265,11 +280,16 @@
   CrunchTask.rangeNextAndCheck = canAdvance;
 
   var uid = 0;
+
+  /**
+   * Generates new id.
+   * @returns {number}
+   */
   function nextUid(){
     return ++uid;
   }
 
-  var EVENT_NAMES = initObjectProps({
+  var EVENT_NAMES = _initObjectProps({
             run: null,
             done: null,
             fail: null,
@@ -278,7 +298,7 @@
             progress: null,
             idle: null
           }, 'event.') ,
-      STATE_NAMES = initObjectProps({
+      STATE_NAMES = _initObjectProps({
             init:  null,
             error:  null,
             running:  null,
@@ -287,17 +307,17 @@
             rejected:  null,
             aborted:  null
           }, 'state.'),
-      SETTLED_STATES = arrayToObject([
+      SETTLED_STATES = _arrayToObject([
         STATE_NAMES.error,
         STATE_NAMES.resolved,
         STATE_NAMES.rejected,
         STATE_NAMES.aborted
       ], true),
-      NEED_REPEAT_STATES = arrayToObject([
+      NEED_REPEAT_STATES = _arrayToObject([
         STATE_NAMES.running,
         STATE_NAMES.paused
       ], true),
-      VERBOSE_STATES = arrayToObject([
+      VERBOSE_STATES = _arrayToObject([
             STATE_NAMES.resolved, STATE_NAMES.rejected,
             STATE_NAMES.error, STATE_NAMES.aborted
           ], [
@@ -305,7 +325,14 @@
             'error', 'aborted'
           ]);
 
-  function initObjectProps(obj, prefix) {
+  /**
+   * For each property assigns a value based on a prefix and the property name
+   * @param {object} obj
+   * @param {string} prefix
+   * @returns {object}
+   * @private
+   */
+  function _initObjectProps(obj, prefix) {
     for(var prop in obj) {
       //noinspection JSUnfilteredForInLoop
       if (__hasOwnProperty.call(obj, prop)) {
@@ -316,7 +343,14 @@
     return obj;
   }
 
-  function arrayToObject(arr, value) {
+  /**
+   * Returns an object based on an array, where array's items from the property names, and the value is specified either directly, or corresponds to another array's item
+   * @param {[]} arr
+   * @param {[]|string|boolean} value
+   * @returns {{}}
+   * @private
+   */
+  function _arrayToObject(arr, value) {
     var result = {},
         isArray = type.isArray(value);
 
@@ -338,9 +372,13 @@
     return target;
   }
 
+  //noinspection JSCommentMatchesSignature,JSValidateJSDoc
   /**
    * Returns a partially applied function `fn` for optional `args`, with optional context of `ctx`
-   * @returns {Function} partially applied function
+   * @param {{}} [ctx]
+   * @param {function} fn
+   * @params {...*} args
+   * @returns {function} partially applied function
    * @private
    */
   function _fnPartial(/*{ctx}, fn, args..*/){
@@ -363,6 +401,7 @@
    * Executes the `fn` function in context of `ctx` and returns if result or `ctx` for chainability
    * @param ctx
    * @param fn
+   * @params {...*} args
    * @returns {Function}|ctx
    * @private
    */
@@ -374,6 +413,12 @@
     };
   }
 
+  /**
+   *
+   * @params {...function} fns
+   * @returns {Function}
+   * @private
+   */
   function _fnTogether(/* fns */) {
     var auxFns = __slice.call(arguments, 0);
     return function() {
@@ -412,6 +457,7 @@
    * Executes all subscribers for `evt` event, scoped by the `hive` object with the supplied arguments
    * @param hive
    * @param evt
+   * @params {...*} args
    * @private
    */
   function _trigger(hive, evt /*, args*/){
@@ -437,11 +483,11 @@
 
   /**
    * Queues execution of this function asynchronously
-   * @param timeoutAmount
-   * @param fn
-   * @param args0
+   * @param {number} timeoutAmount
+   * @param {function} fn
+   * @param {[]} args0
    */
-  function defer(timeoutAmount, fn , args0 ) {
+  function defer(timeoutAmount, fn , args0) {
     var ctx = this;
 
     return setTimeout(function(){
@@ -449,9 +495,17 @@
     }, timeoutAmount || 0);
   }
 
+  /**
+   *
+   * @param {{}} [ctx]
+   * @param {function} fn
+   * @returns {function}
+   */
   function safe(ctx, fn) {
     if (type.isFunction(ctx)) {
+      //noinspection JSValidateTypes
       fn = ctx;
+      //noinspection JSValidateTypes
       ctx = this;
     }
     if (type.isUndefined(fn)) {
@@ -682,6 +736,7 @@
       delete thisTask.isAborted;
       delete thisTask.isPaused;
 
+      //noinspection JSCheckFunctionSignatures
       defer(1, _fnPartial(thisTask, taskEvents.trigger, EVENT_NAMES.idle));
     }
 
@@ -732,6 +787,7 @@
 
   function proceedBodyFn(instanceApi){
     this.currentTimeout = defer.call(this, this.timeoutAmount, function(instanceApi){
+      //noinspection JSPotentiallyInvalidUsageOfThis
       delete this.currentTimeout;
 
       var task = this.task,
@@ -831,6 +887,19 @@
     };
   }
 
+  /**
+   *
+   * @callback descriptionFunc
+   * @param {function} initSetup
+   * @param {function} bodySetup
+   * @param {function} finSetup
+   */
+  /**
+   *
+   * @param {descriptionFunc} descriptionFn
+   * @returns {CrunchTask}
+   * @constructor
+   */
   function CrunchTask(descriptionFn){
     // always dealing with the `new` keyword instantiation
     if (!(this instanceof CrunchTask)) {
@@ -869,6 +938,16 @@
     });
   }
 
+  //noinspection JSCommentMatchesSignature,JSValidateJSDoc
+  /**
+   * @param {number} [start]
+   * @param {number} [finish]
+   * @param {number} [increment]
+   * @param {boolean} [inclusive]
+   * @param {function|CrunchTask} fnBody
+   * @param {function|CrunchTask} fnTail
+   * @returns {CrunchTask}
+   */
   function staticFor (/*{start, finish, increment, inclusive, } * n, fnBody, {fnTail}*/){
     var argsCount = arguments.length,
         fnCount = 0;
@@ -949,8 +1028,8 @@
   /**
    *
    * @param ranges
-   * @param justCheck
-   * @returns {boolean|*}
+   * @param {boolean} [justCheck]
+   * @returns {boolean}
    */
   function canAdvance(ranges, justCheck){
     var currentR = 0,
