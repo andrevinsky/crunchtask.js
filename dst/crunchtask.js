@@ -201,19 +201,22 @@
        */
       function(){
 
-    var result = {},
+    //noinspection JSUnusedAssignment
+        var result = {},
         __toString = Object.prototype.toString,
         _undef,
         sourceTypes = [true, 1, [], function(){}, _undef],
         classNamePattern = /\s+(\w+)]/,
-        fullName;
+        fullName,
+        originalName; // PhantomJS bug
 
     for (var i = 0, maxI = sourceTypes.length; i < maxI; i++) {
-      fullName = __toString.call(sourceTypes[i]).replace('DOMWindow', 'Undefined'); // PhantomJS bug
-      result['is' + fullName.match(classNamePattern)[1]] = getTestFor(fullName);
+      fullName = (originalName = __toString.call(sourceTypes[i])).replace('DOMWindow', 'Undefined'); // PhantomJS bug
+      result['is' + fullName.match(classNamePattern)[1]] = getTestFor(originalName);
     }
 
-    return result;
+    //noinspection JSValidateTypes
+        return result;
 
     function getTestFor(fullName){
       return function(val) {
@@ -246,19 +249,6 @@
     error('Linking', 'Dependency isn\'t met: "promise-polyfill"');
   }
 
-  // should work in any browser without browserify
-
-  if (!type.isFunction(Promise.prototype.done)) {
-    Promise.prototype.done = function (onFulfilled, onRejected) {
-      var self = ((arguments.length) ? this.then.apply(this, arguments) : this);
-      return self.then(null, function (err) {
-        setTimeout(function () {
-          throw err;
-        }, 0);
-      });
-    }
-  }
-
   if (typeof module !== 'undefined' && module.exports) {
     module.exports = root.CrunchTask ? root.CrunchTask : CrunchTask;
   } else if (!root.CrunchTask) {
@@ -279,17 +269,69 @@
     return ++uid;
   }
 
-  var EVENT_NAMES = {
-    run: 'event.run',
-    done: 'event.done',
-    fail: 'event.fail',
-    progress: 'event.progress',
-    idle: 'event.idle'
-  };
+  var EVENT_NAMES = initObjectProps({
+            run: null,
+            done: null,
+            fail: null,
+            abort: null,
+            error: null,
+            progress: null,
+            idle: null
+          }, 'event.') ,
+      STATE_NAMES = initObjectProps({
+            init:  null,
+            error:  null,
+            running:  null,
+            paused:  null,
+            resolved:  null,
+            rejected:  null,
+            aborted:  null
+          }, 'state.'),
+      SETTLED_STATES = arrayToObject([
+        STATE_NAMES.error,
+        STATE_NAMES.resolved,
+        STATE_NAMES.rejected,
+        STATE_NAMES.aborted
+      ], true),
+      NEED_REPEAT_STATES = arrayToObject([
+        STATE_NAMES.running,
+        STATE_NAMES.paused
+      ], true),
+      VERBOSE_STATES = arrayToObject([
+            STATE_NAMES.resolved, STATE_NAMES.rejected,
+            STATE_NAMES.error, STATE_NAMES.aborted
+          ], [
+            'success', 'failure',
+            'error', 'aborted'
+          ]);
+
+  function initObjectProps(obj, prefix) {
+    for(var prop in obj) {
+      //noinspection JSUnfilteredForInLoop
+      if (__hasOwnProperty.call(obj, prop)) {
+        //noinspection JSUnfilteredForInLoop
+        obj[prop] = prefix + prop;
+      }
+    }
+    return obj;
+  }
+
+  function arrayToObject(arr, value) {
+    var result = {},
+        isArray = type.isArray(value);
+
+    for(var i = 0, iMax = arr.length; i < iMax; i++) {
+      result[arr[i]] = isArray ? value[i] : value;
+    }
+
+    return result;
+  }
 
   function _objExtend(target, source) {
     for(var prop in source) {
+      //noinspection JSUnfilteredForInLoop
       if (__hasOwnProperty.call(source, prop)) {
+        //noinspection JSUnfilteredForInLoop
         target[prop] = source[prop];
       }
     }
@@ -332,21 +374,14 @@
     };
   }
 
-  /**
-   * Passes the arguments list as an array. Main recipient is `Promise.resolve|reject`
-   * @param fn
-   * @returns {Function}
-   * @private
-   */
-  function _fnWrapArgsFor(fn /*, auxFns...*/) {
-    var auxFns = __slice.call(arguments, 1);
-    return function(){
+  function _fnTogether(/* fns */) {
+    var auxFns = __slice.call(arguments, 0);
+    return function() {
       var args = __slice.call(arguments, 0),
           auxFn;
       while ((auxFn = auxFns.shift()) && type.isFunction(auxFn)) {
         auxFn.apply(this, args);
       }
-      return fn.call(this, args);
     };
   }
 
@@ -406,199 +441,364 @@
    * @param fn
    * @param args0
    */
-  function defer(timeoutAmount, fn, args0) {
+  function defer(timeoutAmount, fn , args0 ) {
     var ctx = this;
-    setTimeout(function(){
-      fn.apply(ctx, args0);
+
+    return setTimeout(function(){
+      fn.apply(ctx, args0 || []);
     }, timeoutAmount || 0);
+  }
+
+  function safe(ctx, fn) {
+    if (type.isFunction(ctx)) {
+      fn = ctx;
+      ctx = this;
+    }
+    if (type.isUndefined(fn)) {
+      fn = function(){};
+    }
+    return function(){
+      var args0 = __slice.call(arguments, 0);
+      try {
+        fn.apply(ctx, args0);
+        return true;
+      } catch(e){
+        return false;
+      }
+    };
   }
 
   /**
    *
    * @param descriptionFn
-   * @param events
+   * @param taskEvents
    * @returns {Promise}
    */
-  function protoRun(descriptionFn, events){
-    var thisTask = this,
-        args = __slice.call(arguments, 2);
+  function protoRun(descriptionFn, taskEvents){
+    var thisTask = this;
 
-    delete this.isPaused;
-    delete this.isAborted;
+    var instanceApi = {},
+        runCtx = {
+          task: thisTask,
+          id: 'T_' + thisTask.id + ':' + nextUid(),
+          conditionsToMeet: 1,
+          state: STATE_NAMES.init,
+          runBlock: 0,
+          runArgs: __slice.call(arguments, 2),
+          descriptionFn: descriptionFn
+        },
+        encapsulation = null,
+        promiseFn = function(_resolve, _reject){
 
-    this.runCount++;
-
-    events.trigger(EVENT_NAMES.run);
-
-    var result,
-        runState = (function(thisTask){
-          var ctx = {
-            isSettled: null
-          }, isSettledStates = {
-            'null': false,
-            'true': true,
-            'false': true,
-            'paused': false,
-            'aborted': true
-          };
-          return {
-            updateSettledTrue: function(){
-              if (isSettledStates[ctx.isSettled]) {
-                return;
+          encapsulation = _fnPartial(runCtx, encapsulateRunInstance,
+              instanceApi, taskEvents, {
+                resolve: _resolve,
+                reject: _reject
               }
-              ctx.isSettled = true;
-              thisTask.runCount--;
-            },
-            updateSettledFalse: function(){
-              if (isSettledStates[ctx.isSettled]) {
-                return;
-              }
-              ctx.isSettled = false;
-              thisTask.runCount--;
-            },
-            updateSettledVal: function(val){
-              if (isSettledStates[ctx.isSettled]) {
-                return;
-              }
-              ctx.isSettled = val;
-              if (isSettledStates[val]) {
-                thisTask.runCount--;
-              }
-            },
-            status: function(){
-              return ctx.isSettled;
-            }
-          };
-        })(thisTask);
+          );
 
-    try {
-      return (result = new Promise(function(_resolve, _reject){
+          defer.call(runCtx,
+              0, proceedDescriptionFn, [instanceApi]);
+        };
 
-        var initFn, bodyFn, finallyFn,
-            needRepeat, timeoutAmount;
+    return overloadPromise(new Promise(promiseFn), instanceApi, encapsulation);
 
-        if (descriptionFn) {
-          descriptionFn(function (_initFn) {
-            initFn = _initFn;
-          }, function (_bodyFn, _needRepeat, _timeout) {
-            bodyFn = _bodyFn;
-            needRepeat = _needRepeat;
-            timeoutAmount = _timeout;
-          }, function (_finallyFn) {
-            finallyFn = _finallyFn;
-          });
+  }
 
-          defer.call(thisTask, 0, function () {
-            if (initFn) {
-              initFn.apply(thisTask, args);
-            }
+  function overloadPromise(promise, instanceApi, sealEncapsulationFn){
 
-            proceedBody.call(thisTask,
-                bodyFn, {
-                  needRepeat: ((needRepeat !== false) ? (needRepeat || 0) : needRepeat),
-                  timeoutAmount: timeoutAmount,
-                  finallyFn: finallyFn,
-                  controlNexus: {
-                    resolve: _fnWrapArgsFor(_resolve, runState.updateSettledTrue),
-                    reject : _fnWrapArgsFor(_reject, runState.updateSettledFalse),
-                    notify : _fnPartial(events.trigger, EVENT_NAMES.progress),
-                    status : runState.status
-                  }
-                }
-            );
-          });
-        } else {
-          _fnWrapArgsFor(_reject, runState.updateSettledFalse)('empty.description');
+    sealEncapsulationFn(promise);
+
+    return _objExtend(promise, {
+      onError: _fnPartial(promise, instanceApi.runEventsOn, EVENT_NAMES.error),
+
+      abort: _fnPartial(promise, instanceApi.abort),
+      pause: _fnPartial(promise,instanceApi.pause),
+      resume: _fnPartial(promise,instanceApi.resume),
+
+      done: _fnPartial(promise, instanceApi.runEventsOn, EVENT_NAMES.done),
+      fail: _fnPartial(promise, instanceApi.runEventsOn, EVENT_NAMES.fail),
+      always: _fnPartial(promise, instanceApi.runEventsOn, [EVENT_NAMES.done,EVENT_NAMES.fail,EVENT_NAMES.error].join())
+    });
+  }
+
+  function encapsulateRunInstance(instanceApi, taskEvents, resolveReject, promise) {
+
+    var ctx = this,
+        thisTask = ctx.task,
+        resolveSafe = safe(resolveReject.resolve),
+        rejectSafe = safe(resolveReject.reject),
+        runEvents = serveEvents(promise),
+        triggerBoth = _fnTogether(runEvents.trigger, taskEvents.trigger);
+
+    return _objExtend(instanceApi, {
+
+      /**
+       *
+       * @param _initFn
+       * @returns {*}
+       */
+      setupInit: function (_initFn) {
+        if (SETTLED_STATES[ctx.state]) { return; }
+
+        if (!type.isUndefined(_initFn) && !type.isFunction(_initFn)) {
+          return signalError('CrunchTask.description.initSetup', 'Init setup expects an optional function.');
         }
-      }));
-    } finally {
 
-      result.abort = _fnPartial(runState.updateSettledVal, 'aborted');
-      result.pause = _fnPartial(runState.updateSettledVal, 'paused');
-      result.resume = _fnPartial(runState.updateSettledVal, null);
+        ctx.initFn = safe(thisTask, _initFn);
+      },
 
-      result.then(
-          _fnPartial(events.trigger, EVENT_NAMES.done),
-          _fnPartial(events.trigger, EVENT_NAMES.fail)
-      );
+      /**
+       *
+       * @param _bodyFn
+       * @param _needRepeat
+       * @param _timeout
+       * @returns {*}
+       */
+      setupBody: function (_bodyFn, _needRepeat, _timeout) {
+        if (SETTLED_STATES[ctx.state]) { return; }
 
-      result.then(function(){
-        if (thisTask.isIdle()) {
-          events.trigger(EVENT_NAMES.idle);
+        if (!type.isFunction(_bodyFn)) {
+          return signalError('CrunchTask.description.bodySetup', 'Body setup expects a function as a first optional arg.');
         }
-      }, function(){
-        if (thisTask.isIdle()) {
-          events.trigger(EVENT_NAMES.idle);
+
+        if (!type.isUndefined(_needRepeat) && !type.isBoolean(_needRepeat) && !type.isNumber(_needRepeat)) {
+          return signalError('CrunchTask.description.bodySetup', 'Body setup expects a number or false as a 2nd optional arg.');
         }
+
+        if (!type.isUndefined(_timeout) && !type.isNumber(_timeout)) {
+          return signalError('CrunchTask.description.bodySetup', 'Body setup expects a number as a 3rd optional arg.');
+        }
+
+        ctx.bodyFn = safe(thisTask, _bodyFn);
+        ctx.conditionsToMeet--;
+
+        ctx.needRepeat = ((_needRepeat !== false) ? (_needRepeat || 0) : _needRepeat);
+        ctx.timeoutAmount = _timeout;
+      },
+
+      /**
+       *
+       * @param _finallyFn
+       * @returns {*}
+       */
+      setupFin: function (_finallyFn) {
+        if (SETTLED_STATES[ctx.state]) { return; }
+        if (!type.isUndefined(_finallyFn) && !type.isFunction(_finallyFn)) {
+          return signalError('CrunchTask.description.finSetup', 'Fin setup expects a function as a first optional arg.');
+        }
+        ctx.finallyFn = safe(thisTask, _finallyFn);
+      },
+
+      signalError: signalError,
+
+      runEventsOn: runEvents.on,
+      //onError: _fnPartial(runEvents.on, EVENT_NAMES.error),
+      //onDone: _fnPartial(runEvents.on, EVENT_NAMES.done),
+      //onFail: _fnPartial(runEvents.on, EVENT_NAMES.fail),
+      //onAlways: _fnPartial(runEvents.on, [EVENT_NAMES.done,EVENT_NAMES.fail].join()),
+
+      /**
+       *
+       */
+      goRunning: function(){
+        thisTask.runCount++;
+        ctx.state = STATE_NAMES.running;
+        taskEvents.trigger(EVENT_NAMES.run, ctx.id); // no need to call runInst
+      },
+      /**
+       *
+       */
+      resolve: function(){
+        if (SETTLED_STATES[ctx.state]) { return; }
+        var args0 = __slice.call(arguments, 0);
+        ctx.state = STATE_NAMES.resolved;
+        ctx.value = args0;
+
+        decreaseRunning(thisTask);
+
+        signalGeneric(args0, EVENT_NAMES.done, resolveSafe);
+      },
+      /**
+       *
+       */
+      reject: function(){
+
+        if (SETTLED_STATES[ctx.state]) { return; }
+        var args0 = __slice.call(arguments, 0);
+        ctx.state = STATE_NAMES.rejected;
+        ctx.value = args0;
+
+        decreaseRunning(thisTask);
+
+        signalGeneric(args0, EVENT_NAMES.fail, rejectSafe);
+      },
+      abort: function(){
+        if (SETTLED_STATES[ctx.state]) { return; }
+        ctx.state = STATE_NAMES.aborted;
+        return this;
+      },
+
+      pause: function (){
+        if (SETTLED_STATES[ctx.state]) { return; }
+        ctx.state = STATE_NAMES.paused;
+        return this;
+      },
+
+      resume: function(){
+        if (SETTLED_STATES[ctx.state]) { return; }
+        ctx.state = STATE_NAMES.running;
+        return this;
+      },
+
+      sendNotify: _fnPartial(triggerBoth, EVENT_NAMES.progress)
+
+    });
+
+    function signalError(){
+      if (SETTLED_STATES[ctx.state]) { return; }
+
+      var args0 = __slice.call(arguments, 0);
+      ctx.state = STATE_NAMES.error;
+      ctx.value = args0;
+
+      signalGeneric(args0, EVENT_NAMES.error, rejectSafe);
+    }
+
+    function signalGeneric(args0, eventName, actionFn) {
+
+      triggerBoth.apply(this, [eventName].concat(args0));
+
+      if (actionFn) {
+        defer.call(thisTask, 0, actionFn, [args0]);
+      }
+    }
+
+    function decreaseRunning(thisTask){
+      if (!thisTask.runCount) { return; }
+      thisTask.runCount--;
+      if (thisTask.runCount) { return; }
+
+      delete thisTask.isAborted;
+      delete thisTask.isPaused;
+
+      defer(1, _fnPartial(thisTask, taskEvents.trigger, EVENT_NAMES.idle));
+    }
+
+  }
+
+
+  function proceedDescriptionFn(instanceApi) {
+
+    var ctx = this,
+        thisTask = ctx.task,
+        descriptionFn = ctx.descriptionFn;
+
+    if (!descriptionFn) {
+      return instanceApi.signalError('CrunchTask.description.empty', 'Description function is empty.');
+    }
+
+    if (safe(thisTask, descriptionFn)(
+            instanceApi.setupInit,
+            instanceApi.setupBody,
+            instanceApi.setupFin) &&
+        (!SETTLED_STATES[ctx.state]) &&
+        (ctx.conditionsToMeet === 0)) {
+
+      var _needRepeat = ctx.needRepeat;
+      _needRepeat = ((_needRepeat !== false) ? (_needRepeat || 0) : _needRepeat);
+
+      ctx.needRepeat = (_needRepeat === 0) ? true : _needRepeat;
+      ctx.timeoutAmount = ctx.timeoutAmount || 0;
+
+      // schedule init, body, fin, etc.
+      defer.call(ctx, 0, function(){
+
+        instanceApi.goRunning();
+
+        if (this.initFn && !this.initFn.apply(this, this.runArgs)) {
+          instanceApi.signalError('CrunchTask.description.init');
+        }
+
+        proceedBodyFn.call(this, instanceApi);
+
       });
+
+    } else {
+      // bad outcome, reject
+      return instanceApi.signalError('CrunchTask.description.else', '');
     }
   }
 
-  function proceedBody(bodyFn, options) {
-    var needRepeat = options.needRepeat,
-        timeoutAmount = options.timeoutAmount ,
-        finallyFn = options.finallyFn,
-        controlNexus = options.controlNexus,
-        resolve = controlNexus.resolve,
-        reject = controlNexus.reject,
-        notify = controlNexus.notify,
-        timeLimit = type.isNumber(needRepeat) ? needRepeat : 0;
+  function proceedBodyFn(instanceApi){
+    this.currentTimeout = defer.call(this, this.timeoutAmount, function(instanceApi){
+      delete this.currentTimeout;
 
-    var _needRepeat = (needRepeat === 0) ? true : needRepeat;
+      var task = this.task,
+          needRepeat = this.needRepeat,
+          timeLimit = type.isNumber(needRepeat) ? needRepeat : 0;
 
-    defer.call(this, timeoutAmount || 0, function(){
-      var timerBatchStart, timerStart, miniRunCount = 0, timerElapsed = 0;
+      var timerBatchStart,
+          timerStart,
+          miniRunCount = 0,
+          timerElapsed = 0;
 
-      var canExecuteNextLoop = ((controlNexus.status() === null) && !this.isPaused && !this.isAborted),
+      var canExecuteNextLoop = (this.state === STATE_NAMES.running) && !task.isPaused && !task.isAborted,
           canRepeatThisLoop,
           canQueueNextBatch;
 
       if (canExecuteNextLoop) {
         timerBatchStart = new Date();
         do {
+
           try {
             timerStart = new Date();
-            bodyFn(resolve, reject, notify, {
+            this.bodyFn(instanceApi.resolve, instanceApi.reject, instanceApi.sendNotify, {
               batchStarted: timerBatchStart,
               batchIndex: miniRunCount,
-              batchElapsed: timerElapsed
+              batchElapsed: timerElapsed,
+              runBlock: this.runBlock
             });
-          } catch (ex){
-            reject(ex);
+
+          } catch(ex) {
+            instanceApi.signalError('body', ex);
           }
 
           timerElapsed += (new Date() - timerStart);
           miniRunCount++;
 
-          canRepeatThisLoop = ((!!_needRepeat) &&
-          (timerElapsed < timeLimit) &&
-          (controlNexus.status() === null));
+          canRepeatThisLoop = needRepeat &&
+            (timerElapsed < timeLimit) && (this.state === STATE_NAMES.running);
+
         } while (canRepeatThisLoop);
-      } else if (this.isAborted || (controlNexus.status() === 'aborted')) {
-        reject('aborted');
+
+      } else if (task.isAborted || this.state === STATE_NAMES.aborted) {
+        instanceApi.reject('aborted');
       }
 
-      var _status = controlNexus.status();
-      canQueueNextBatch = ((!!_needRepeat) &&
-        ((_status === null) || (_status === 'paused')) &&
-        !this.isAborted);
+      canQueueNextBatch = needRepeat && NEED_REPEAT_STATES[this.state] && !task.isAborted;
 
       if (canQueueNextBatch) {
-        return proceedBody.call(this, bodyFn, options);
+        this.runBlock++;
+        return proceedBodyFn.call(this, instanceApi);
       }
 
-      try {
-        if (finallyFn) {
-          finallyFn.call(this, _status);
-        }
-      } catch (ex) {}
-    });
+      if (needRepeat === false) {
+        instanceApi.resolve();
+      }
+
+      if (this.finallyFn && !this.finallyFn.call(this, VERBOSE_STATES[this.state])) {
+        instanceApi.signalError('CrunchTask.description.fin', this.status);
+      }
+
+    }, [instanceApi]);
   }
 
   function protoAbort(){
     this.isAborted = true;
     return this;
   }
+
   function protoPause(){
     this.isPaused = true;
     return this;
@@ -637,11 +837,10 @@
       return new CrunchTask(descriptionFn);
     }
 
-    if (!type.isFunction(descriptionFn)) {
-      return error('CrunchTask.ctor', 'Single argument is required: `fn(initFn,bodyFn,finFn)`');
-    }
-    var events = serveEvents(this);
-    return prepareBlankTask(this, events, descriptionFn);
+    //if (!type.isFunction(descriptionFn)) {
+    //  return error('CrunchTask.ctor', 'Single argument is required: `fn(initFn,bodyFn,finFn)`');
+    //}
+    return prepareBlankTask(this, serveEvents(this), descriptionFn);
   }
 
   function prepareBlankTask(task, events, descriptionFn) {
@@ -652,6 +851,7 @@
       isIdle: function isIdle(){
         return task.runCount === 0;
       },
+
       pause: _fnBind(task, protoPause),
       resume: _fnBind(task, protoResume),
       abort: _fnBind(task, protoAbort),
@@ -661,9 +861,10 @@
 
       onRun: _fnPartial(events.on, EVENT_NAMES.run),
       onIdle: _fnPartial(events.on, EVENT_NAMES.idle),
+      onError: _fnPartial(events.on, EVENT_NAMES.error),
       done: _fnPartial(events.on, EVENT_NAMES.done),
       fail: _fnPartial(events.on, EVENT_NAMES.fail),
-      always: _fnPartial(events.on, [EVENT_NAMES.done,EVENT_NAMES.fail].join()),
+      always: _fnPartial(events.on, [EVENT_NAMES.done,EVENT_NAMES.fail,EVENT_NAMES.error].join()),
       progress: _fnPartial(events.on, EVENT_NAMES.progress)
     });
   }

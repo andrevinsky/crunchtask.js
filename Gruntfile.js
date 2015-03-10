@@ -28,7 +28,7 @@ module.exports = function(grunt) {
               'bower_components/promise-polyfill/Promise.js',
               'lib/<%= pkg.name %>.js'
             ],
-            dest: 'dest/<%= pkg.name %>.js',
+            dest: 'dst/<%= pkg.name %>.js',
             nonull: true
           }
         ]
@@ -41,8 +41,8 @@ module.exports = function(grunt) {
         '<%= grunt.template.today("yyyy-mm-dd") %> */'
       },
       browser: {
-        src: 'dest/<%= pkg.name %>.js',
-        dest: 'dest/<%= pkg.name %>.min.js'
+        src: 'dst/<%= pkg.name %>.js',
+        dest: 'dst/<%= pkg.name %>.min.js'
       }
 		},
 
