@@ -16,16 +16,18 @@ whenAll = root.whenAll || utils.whenAll
 describe 'TaskCruncher Specification ', ->
 
   it 'Use Jasmine with Version 2.xx', ->
+    console.log ""
     console.log "jasmine.version= #{jasmine.version}"
+    console.log ""
     expect(jasmine.version).toMatch(/^2\./);
     return
 
 
   describe 'Usage Patterns: ', ->
     task = null
+    console.log "jasmine.DEFAULT_TIMEOUT_INTERVAL = #{ jasmine.DEFAULT_TIMEOUT_INTERVAL}"
 
     beforeEach () ->
-      console.log "B.E. USAGE. jasmine.DEFAULT_TIMEOUT_INTERVAL = #{ jasmine.DEFAULT_TIMEOUT_INTERVAL}"
       return
 
     afterEach ()->
