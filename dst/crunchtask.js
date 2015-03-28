@@ -766,10 +766,10 @@
       ctx.needRepeat = (_needRepeat === 0) ? true : _needRepeat;
       ctx.timeoutAmount = ctx.timeoutAmount || 0;
 
+      instanceApi.goRunning();
+
       // schedule init, body, fin, etc.
       defer.call(ctx, 0, function(){
-
-        instanceApi.goRunning();
 
         if (this.initFn && !this.initFn.apply(this, this.runArgs)) {
           instanceApi.signalError('CrunchTask.description.init');
