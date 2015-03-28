@@ -10,9 +10,9 @@ root = typeof window is 'object' && window ? window : global
 type = root.type || utils.type
 whenAll = root.whenAll || utils.whenAll
 
-fdescribe 'CrunchTask Events Spec.', ->
+describe 'CrunchTask Events Spec.', ->
 
-  fit 'Ensures the onIdle is called once per task batch', (done)->
+  it 'Ensures the onIdle is called once per task batch', (done)->
 
     foo = {
       bar: ()->
