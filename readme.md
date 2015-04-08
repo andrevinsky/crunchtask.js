@@ -12,7 +12,10 @@ ChrunchTask.js can be used thus:
 
     bower install chrunchtask
 
-..
+or if you're using nodejs,
+
+    bower install chrunchtask
+
 
 ## Usage Example
 
@@ -75,7 +78,9 @@ var collatzTask = new ChrunchTask(function(init, body, fin){
 
 This _description function_ provides the means for the task to receive parameters at the beginning of its execution, process them, and, optionally, do something in the end, after the execution has finished. It will get called once the `run()` method of the task is executed.
 
+
 During run-time the _description function_ receives three parameters, three functions, `init`, `body`, and `fin`, called _initialization setup_, _body setup_, and _finalization setup_ respectively.
+
 
 Once the task is properly set up, we can do the processing as many times as we want with its `run()` method, to which we pass the values we need processing performed on:
 

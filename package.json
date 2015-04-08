@@ -1,6 +1,6 @@
 {
   "name": "crunchtask",
-  "version": "0.8.2",
+  "version": "0.8.4",
   "description": "A library that executes long-running tasks without freezing of a machine and employs an easy usage pattern ",
   "main": "lib/crunchtask.js",
   "scripts": {
@@ -15,7 +15,9 @@
     "task",
     "crunchtask"
   ],
-  "author": "Andrew Revinsky",
+  "authors": [
+    "Andrew Revinsky <arevinsky@gmail.com> (https://github.com/AndrewRevinsky)"
+  ],
   "license": "MIT",
   "bugs": {
     "url": "https://github.com/AndrewRevinsky/crunchtask.js/issues"
@@ -24,7 +26,7 @@
   "readmeFilename": "README.md",
   "devDependencies": {
     "karma-coffee-preprocessor": "^0.2.1",
-    "jasmine-core": "~2.1.3",
+    "jasmine-core": "~2.2.0",
     "karma-jasmine": "~0.3.5",
     "karma-chrome-launcher": "~0.1.7",
     "grunt-contrib-concat": "~0.5.0",

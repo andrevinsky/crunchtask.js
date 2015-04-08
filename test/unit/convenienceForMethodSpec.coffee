@@ -243,6 +243,9 @@ describe 'CrunchTask convenience methods Spec.', ->
       )
     )
 
+    afterEach ()->
+      delete foo.bar
+
     it 'once called, the `for()` method creates a CrunchTask instance', ()->
       forLoop = CrunchTask.for(()->)
       expect(forLoop instanceof CrunchTask).toBe(true);
@@ -252,11 +255,15 @@ describe 'CrunchTask convenience methods Spec.', ->
 
       spyOn(foo, 'bar').and.callThrough()
 
-      forLoop = CrunchTask.for(0, 2, foo.bar)
+      forLoop = CrunchTask.for(0, 2, (args...)->
+#        console.log "2. time: #{ new Date() - 0}"
+        foo.bar.apply(foo, args)
+      )
 
       expect(foo.bar).not.toHaveBeenCalled()
 
       forLoop.run()
+#      console.log "1. time: #{ new Date() - 0}"
 
       setTimeout(()->
         expect(foo.bar).toHaveBeenCalled()
@@ -265,8 +272,9 @@ describe 'CrunchTask convenience methods Spec.', ->
         expect(foo.bar.calls.argsFor(1)).toEqual([1])
         expect(foo.bar.calls.argsFor(2)).toEqual([])
         expect(foo.bar.calls.argsFor(2)).toEqual([])
+#        console.log "3. time: #{ new Date() - 0}"
         done()
-      , 100)
+      , 4000)
 
       return
 
@@ -289,7 +297,7 @@ describe 'CrunchTask convenience methods Spec.', ->
         expect(foo.bar.calls.argsFor(3)).toEqual([3])
         expect(foo.bar.calls.argsFor(4)).toEqual([4])
         done()
-      , 100)
+      , 4000)
 
       return
 
@@ -340,14 +348,14 @@ describe 'CrunchTask convenience methods Spec.', ->
       forLoop = CrunchTask.for()
       forLoop.done(foo.bar)
 
-      expect(foo.bar.calls.any()).toEqual(false)
+      expect(foo.bar).not.toHaveBeenCalled()
 
       forLoop.run()
 
       setTimeout(()->
-        expect(foo.bar.calls.any()).toEqual(true)
+        expect(foo.bar).toHaveBeenCalled()
         done()
-      , 100)
+      , 1000)
       return
 
     return

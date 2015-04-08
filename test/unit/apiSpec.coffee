@@ -484,7 +484,7 @@ describe 'CrunchTask API Spec.', ->
         expect(foo.errorRunHandler.calls.argsFor(0)[0]).toEqual('CrunchTask.description.init')
 
         done()
-      ,100
+      , 1000
       return
 
     return

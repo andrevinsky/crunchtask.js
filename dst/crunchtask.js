@@ -627,7 +627,7 @@
         ctx.bodyFn = safe(thisTask, _bodyFn);
         ctx.conditionsToMeet--;
 
-        ctx.needRepeat = ((_needRepeat !== false) ? (_needRepeat || 0) : _needRepeat);
+        ctx.needRepeat = _needRepeat; //((_needRepeat !== false) ? (_needRepeat || 100) : _needRepeat);
         ctx.timeoutAmount = _timeout;
       },
 
@@ -778,7 +778,7 @@
           instanceApi.signalError('CrunchTask.description.init');
         }
 
-        proceedBodyFn.call(this, instanceApi);
+        proceedBodyFn.call(this, instanceApi, true);
 
       });
 
@@ -788,10 +788,8 @@
     }
   }
 
-  function proceedBodyFn(instanceApi){
-    this.currentTimeout = defer.call(this, this.timeoutAmount, function(instanceApi){
-      //noinspection JSPotentiallyInvalidUsageOfThis
-      delete this.currentTimeout;
+  function proceedBodyFn(instanceApi, isFirstTime){
+    defer.call(this, isFirstTime ? 0 : this.timeoutAmount, function(instanceApi){
 
       var task = this.task,
           needRepeat = this.needRepeat,
@@ -826,7 +824,7 @@
           timerElapsed += (new Date() - timerStart);
           miniRunCount++;
 
-          canRepeatThisLoop = needRepeat &&
+          canRepeatThisLoop = needRepeat && (timeLimit !== 0) &&
             (timerElapsed < timeLimit) && (this.state === STATE_NAMES.running);
 
         } while (canRepeatThisLoop);

@@ -16,9 +16,9 @@ whenAll = root.whenAll || utils.whenAll
 describe 'TaskCruncher Specification ', ->
 
   it 'Use Jasmine with Version 2.xx', ->
-    console.log ""
-    console.log "jasmine.version= #{jasmine.version}"
-    console.log ""
+    console.log "\r\n
+jasmine.version= #{jasmine.version}
+\r\n"
     expect(jasmine.version).toMatch(/^2\./);
     return
 
@@ -300,7 +300,7 @@ describe 'TaskCruncher Specification ', ->
       spyOn(foo, 'bar').and.callThrough()
 
       batchExecTimeLimitMilliseconds = 100
-      runCount = 250000
+      runCount = 25000
 
       task = new CrunchTask (init, body, fin)->
         # Declaration, pre-initialization
@@ -388,10 +388,10 @@ describe 'TaskCruncher Specification ', ->
       executionTimeout = 500
 
       task = new CrunchTask (init, body, fin)->
-        count = 2
+        count = 3
 
-        init (started) ->
-          foo.bar(started - 0)
+        init (_started) ->
+          foo.bar(_started)
           return
 
         body (resolve, reject, notify, diag)->
@@ -405,21 +405,24 @@ describe 'TaskCruncher Specification ', ->
         return
 
       task.done ->
-        batchStarted0 = foo.bar.calls.argsFor(0)[0]
-        batchStarted1 = foo.bar.calls.argsFor(1)[0]
-        batchStarted2 = foo.bar.calls.argsFor(2)[0]
+        initStarted = foo.bar.calls.argsFor(0)[0]
+        bodyFirstRun = foo.bar.calls.argsFor(1)[0]
+        bodySecondRun = foo.bar.calls.argsFor(2)[0]
+        bodyThirdRun = foo.bar.calls.argsFor(3)[0]
 
-        timeoutForBatch1 = Math.abs(batchStarted1 - batchStarted0)
-        timeoutForBatch2 = Math.abs(batchStarted2 - batchStarted1)
+        timeoutBetweenInitAndBody = Math.abs(bodyFirstRun - initStarted)
+        timeoutBetweenTwoFirstBodyCalls = Math.abs(bodySecondRun - bodyFirstRun)
+        timeoutBetweenTwoSecondBodyCalls = Math.abs(bodyThirdRun - bodySecondRun)
 
         precision = -Math.log10( 100 * 2) # +/-100ms
-        expect(timeoutForBatch1).toBeCloseTo(executionTimeout, precision)
-        expect(timeoutForBatch2).toBeCloseTo(executionTimeout, precision)
+        expect(timeoutBetweenInitAndBody).toBeCloseTo(0, precision)
+        expect(timeoutBetweenTwoFirstBodyCalls).toBeCloseTo(executionTimeout, precision)
+        expect(timeoutBetweenTwoSecondBodyCalls).toBeCloseTo(executionTimeout, precision)
 
         done()
         return
 
-      task.run(new Date())
+      task.run(new Date() - 0)
 
       return
 

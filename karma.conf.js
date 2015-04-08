@@ -15,8 +15,7 @@ module.exports = function(config) {
 
     // list of files / patterns to load in the browser
     files: [
-       'bower_components/promise-polyfill/Promise.js',
-       'bower_components/promise-done-6.0.0/index.js',
+      'bower_components/promise-polyfill/Promise.js',
       'lib/*.js',
       'test/unit/utils.coffee',
       'test/**/*Spec.coffee'
