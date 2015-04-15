@@ -38,6 +38,16 @@ describe 'CrunchTask convenience methods Spec.', ->
       expect(type(range.canAdvance)).toEqual('function')
       return
 
+    it 'declares static `forEach()` method', ()->
+      expect(CrunchTask.forEach).toBeDefined()
+      expect(type(CrunchTask.forEach)).toEqual('function')
+      return
+
+    it 'declares static `reduce()` method', ()->
+      expect(CrunchTask.reduce).toBeDefined()
+      expect(type(CrunchTask.reduce)).toEqual('function')
+      return
+
     return
 
   describe '`rangeCheck()` method parses the arguments into async-for-loop-ready structure', ()->
@@ -209,7 +219,7 @@ describe 'CrunchTask convenience methods Spec.', ->
 
     return
 
-  describe '`rangeNextAndCheck()` method tries to advance the current position of the ranges structure', ()->
+  describe '`range::canAdvance()` method tries to advance the current position of the ranges structure', ()->
     range = null;
 
     beforeEach(()->
@@ -390,5 +400,42 @@ describe 'CrunchTask convenience methods Spec.', ->
       return
 
     return
+
+
+  describe 'the `forEach()` method', ()->
+    it 'enumerates a long array in async fashion', (done)->
+      length = 100000
+      count = 0
+      task = CrunchTask.forEach(new Array(length), (v, k)->
+        expect(type(v)).toBe('undefined')
+        expect(k).toEqual(count)
+        count++
+      )
+      task.run()
+      setTimeout( ()->
+        expect(count).toEqual(length)
+        done()
+      ,4000)
+      return
+
+    return
+
+  describe 'the `reduce()` method', ()->
+    it 'enumerates a long array and collects data in async fashion', (done)->
+      length = 100000
+      count = 0
+      memo = 0
+      task = CrunchTask.reduce(new Array(length), memo, (memo, v, k)->
+        memo += k % 2
+        expect(type(v)).toBe('undefined')
+        expect(k).toEqual(count)
+        count++
+        memo
+      ).done (memo)->
+        expect(memo).toEqual(length / 2)
+        done()
+      task.run()
+    return
+
 
   return
