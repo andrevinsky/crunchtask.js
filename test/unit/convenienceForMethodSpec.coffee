@@ -404,7 +404,7 @@ describe 'CrunchTask convenience methods Spec.', ->
 
   describe 'the `forEach()` method', ()->
     it 'enumerates a long array in async fashion', (done)->
-      length = 100000
+      length = 50000
       count = 0
       task = CrunchTask.forEach(new Array(length), (v, k)->
         expect(type(v)).toBe('undefined')
@@ -422,7 +422,7 @@ describe 'CrunchTask convenience methods Spec.', ->
 
   describe 'the `reduce()` method', ()->
     it 'enumerates a long array and collects data in async fashion', (done)->
-      length = 100000
+      length = 50000
       count = 0
       memo = 0
       task = CrunchTask.reduce(new Array(length), memo, (memo, v, k)->

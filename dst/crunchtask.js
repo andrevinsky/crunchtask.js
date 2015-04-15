@@ -277,7 +277,9 @@
   CrunchTask.for = staticFor;
   CrunchTask.range = staticFor;
   CrunchTask.rangeCheck = normalizeRanges;
-  CrunchTask.rangeNextAndCheck = canAdvance;
+  CrunchTask.rangeNextAndCheck = _fnPartial(error, 'Obsolete', 'Use range.canAdvance() instead.');
+  CrunchTask.forEach = staticForEach;
+  CrunchTask.reduce = staticReduce;
 
   var uid = 0;
 
@@ -959,7 +961,7 @@
 
     var args = __slice.call(arguments, 0, argsCount - fnCount),
         fns = __slice.call(arguments, - fnCount),
-        ranges = translateRangeArgs(parseRangeArgs(args)),
+        ranges = new Range(args),
         taskBody = fns[0],
         taskTail = fns[1] || function(){};
 
@@ -970,34 +972,106 @@
     return internalFor(ranges, taskBody, taskTail);
   }
 
-  function normalizeRanges(){
-    var args = __slice.call(arguments, 0);
-    return translateRangeArgs(parseRangeArgs(args));
-  }
-
-  function internalFor(_ranges,  taskBody, taskTail){
+  function staticForEach(arr, taskBody, taskTail){
     return new CrunchTask(function(init, body, fin){
-      var ranges = _ranges, canRunCycle;
+      var ranges,
+        ptr,
+        arrInternal = arr,
+        canRunCycle,
+        bodyFn = getExecutableFor(taskBody, this),
+        tailFn = getExecutableFor(taskTail, this);
 
-      init(function(){
-        var args = __slice.call(arguments, 0);
-        if (args.length) {
-          ranges = translateRangeArgs(parseRangeArgs(args));
+      init(function(_arr) {
+        if (_arr) {
+          arrInternal = arr;
         }
-        canRunCycle = canAdvance(ranges, true);
+        ranges = new Range([0, arrInternal.length]);
+        canRunCycle = ranges.canAdvance(true);
       });
 
       body(function(resolve){
         if (canRunCycle) {
-          callExecutableWith(taskBody, collectRanges(ranges));
+          ptr = ranges.valueOf()[0];
+          bodyFn([arrInternal[ptr], ptr]);
         }
-        if (!canRunCycle || !canAdvance(ranges)) {
+        if (!canRunCycle || !ranges.canAdvance()) {
           resolve();
         }
       }, 100);
 
       fin(function(){
-        callExecutableWith(taskTail, collectRanges(ranges));
+        tailFn(ranges.valueOf());
+      });
+    });
+  }
+
+  function staticReduce(arr, memo, taskBody, taskTail) {
+    return new CrunchTask(function(init, body, fin) {
+      var ranges,
+        ptr,
+        arrInternal = arr,
+        memoInternal = memo,
+        canRunCycle,
+        bodyFn = getExecutableFor(taskBody, this),
+        tailFn = getExecutableFor(taskTail, this);
+
+      init(function(_arr, _memo){
+        if (_arr) {
+          arrInternal = arr;
+        }
+        ranges = new Range([0, arrInternal.length]);
+        canRunCycle = ranges.canAdvance(true);
+        if (!type.isUndefined(_memo)) {
+          memoInternal = _memo;
+        }
+      });
+
+      body(function(resolve){
+        if (canRunCycle) {
+          ptr = ranges.valueOf()[0];
+          memoInternal = bodyFn([memoInternal, arrInternal[ptr], ptr]);
+        }
+        if (!canRunCycle || !ranges.canAdvance()) {
+          resolve(memoInternal);
+        }
+      }, 100);
+
+      fin(function(){
+        tailFn(memoInternal, ranges.valueOf());
+      });
+    });
+  }
+
+  function normalizeRanges(){
+    var args = __slice.call(arguments, 0);
+    return new Range(args);
+  }
+
+  function internalFor(_ranges,  taskBody, taskTail){
+    return new CrunchTask(function(init, body, fin){
+      var ranges = _ranges, canRunCycle,
+        bodyFn = getExecutableFor(taskBody, this),
+        tailFn = getExecutableFor(taskTail, this);
+
+      init(function(){
+        var args = __slice.call(arguments, 0);
+        if (args.length) {
+          ranges = new Range(args);
+        }
+        canRunCycle = ranges.canAdvance(true);
+      });
+
+      body(function(resolve){
+        if (canRunCycle) {
+          bodyFn(ranges.valueOf());
+        }
+        if (!canRunCycle || !ranges.canAdvance()) {
+          resolve();
+        }
+      }, 100);
+
+      fin(function(){
+        tailFn(ranges.valueOf());
       });
     });
   }
@@ -1010,132 +1084,155 @@
     });
   }
 
-  function callExecutableWith(task, args) {
+  function getExecutableFor(task, ctx) {
     if (type.isFunction(task)) {
-      task.apply(this, args);
-    } else if (task instanceof CrunchTask){
-      task.run.apply(task, args);
+      return function(args){ return task.apply(ctx || this, args); };
+    }  else if (task instanceof CrunchTask) {
+      return function (args) { return task.run.apply(task, args); };
+    } else {
+      return function(k){ return k; };
     }
   }
 
-  function collectRanges(ranges){
-    var result = [];
-    for (var i = 0, maxI = ranges.length; i < maxI; i++) {
-      result.push(ranges[i].current);
-    }
-    return result;
-  }
 
-  /**
-   *
-   * @param ranges
-   * @param {boolean} [justCheck]
-   * @returns {boolean}
-   */
-  function canAdvance(ranges, justCheck){
-    var currentR = 0,
+
+  var Range = (function(){
+
+    function Range(args) {
+      if ((arguments.length > 1) || (!type.isArray(args))) {
+        error('Ranges', 'Pass strictly a single arguments of type array');
+      }
+      if (!(this instanceof Range)) {
+        return new Range(args);
+      }
+      this.data = translateRangeArgs(parseRangeArgs(args));
+    }
+
+    Range.prototype.toString = Range.prototype.valueOf = function(){
+      var result = [];
+      for (var i = 0, maxI = this.data.length; i < maxI; i++) {
+        result.push(this.data[i].current);
+      }
+      return result;
+    };
+
+    /**
+     *
+     * @param {boolean} [justCheck]
+     * @returns {boolean}
+     */
+    Range.prototype.canAdvance = function canAdvance(justCheck){
+      var currentR = 0,
+        ranges = this.data,
         maxR = ranges.length,
         range,
         counterOverflow,
         rangeInBounds;
 
-    do {
-      counterOverflow = false;
-      range = ranges[currentR];
+      do {
+        counterOverflow = false;
+        range = ranges[currentR];
 
-      if (justCheck !== true) {
-        range.current += range.step;
-      }
-
-      if ((!range.inclusive && (range.current === range.to)) || ((range.step > 0) ? (range.current > range.to) : (range.current < range.to))) {
-        range.current = range.from;
-        counterOverflow = true;
-        currentR++;
-      }
-
-      rangeInBounds = (currentR < maxR);
-
-    } while (counterOverflow && rangeInBounds);
-
-    return (!counterOverflow && rangeInBounds);
-  }
-
-  function parseRangeArgs(args, preventRecursion) {
-    var result = [],
-        current = [],
-        item,
-        isArrayFlag;
-
-    while (args.length) {
-      item = args.splice(0, 1)[0];
-      isArrayFlag = type.isArray(item);
-
-      if (isArrayFlag && (preventRecursion !== true)) {
-        if (current.length) {
-          result.push(current);
-          current = [];
+        if (justCheck !== true) {
+          range.current += range.step;
         }
-        result.push(parseRangeArgs(item, true));
-      } else if (type.isBoolean(item)) {
-        current.push(item);
-        result.push(current);
-        current = [];
-      } else if (type.isNumber(item)) {
-        current.push(item);
+
+        if ((!range.inclusive && (range.current === range.to)) || ((range.step > 0) ? (range.current > range.to) : (range.current < range.to))) {
+          range.current = range.from;
+          counterOverflow = true;
+          currentR++;
+        }
+
+        rangeInBounds = (currentR < maxR);
+
+      } while (counterOverflow && rangeInBounds);
+
+      return (!counterOverflow && rangeInBounds);
+    };
+
+    return Range;
+
+    function translateRangeArgs(args) {
+      var result = [];
+
+      for (var i = 0, maxI = args.length; i < maxI; i++) {
+        result.push(translateRangeSet(args[i]));
       }
+
+      return result;
     }
 
-    if (current.length) {
-      result.push(current);
-    }
-
-    return (preventRecursion === true) ? result[0] : result;
-  }
-
-  function translateRangeArgs(args) {
-    var result = [];
-
-    for (var i = 0, maxI = args.length; i < maxI; i++) {
-      result.push(translateRangeSet(args[i]));
-    }
-
-    return result;
-  }
-
-  function translateRangeSet(rangeSet) {
-    var rangeLength = rangeSet.length,
+    function translateRangeSet(rangeSet) {
+      var rangeLength = rangeSet.length,
         last = rangeLength - 1,
         lastIsBool = type.isBoolean(rangeSet[last]),
         step;
 
-    //noinspection FallThroughInSwitchStatementJS
-    switch (rangeLength - ((lastIsBool) ? 1 : 0)) {
-      case 2: // fallthrough
-      case 3: // fallthrough
-      {
-        step = (((rangeLength - ((lastIsBool) ? 1 : 0)) === 3) ?
+      //noinspection FallThroughInSwitchStatementJS
+      switch (rangeLength - ((lastIsBool) ? 1 : 0)) {
+        case 2: // fallthrough
+        case 3: // fallthrough
+        {
+          step = (((rangeLength - ((lastIsBool) ? 1 : 0)) === 3) ?
             rangeSet[2] : ((rangeSet[0] <= rangeSet[1]) ? 1 : -1));
-        return {
-          from: rangeSet[0],
-          current: rangeSet[0],
-          to: rangeSet[1],
-          step: step,
-          inclusive: lastIsBool ? rangeSet[rangeLength - 1] : false
-        };
+          return {
+            from: rangeSet[0],
+            current: rangeSet[0],
+            to: rangeSet[1],
+            step: step,
+            inclusive: lastIsBool ? rangeSet[rangeLength - 1] : false
+          };
+        }
+
+        case 0: // fallthrough
+        case 1: // fallthrough
+          error('Ranges', 'Use at least two values to define a range.');
+          break;
+
+        default:
+          if (((rangeLength % 2) === 0) && ((rangeLength % 3) === 0)) {
+            error('Ranges', 'Use arrays to split range parts. Cannot determine pattern now.');
+          } else {
+            error('Ranges', 'Use arrays to split range parts properly.');
+          }
+      }
+    }
+
+
+    function parseRangeArgs(args, preventRecursion) {
+      var result = [],
+        current = [],
+        item,
+        isArrayFlag;
+
+      while (args.length) {
+        item = args.splice(0, 1)[0];
+        isArrayFlag = type.isArray(item);
+
+        if (isArrayFlag && (preventRecursion !== true)) {
+          if (current.length) {
+            result.push(current);
+            current = [];
+          }
+          result.push(parseRangeArgs(item, true));
+        } else if (type.isBoolean(item)) {
+          current.push(item);
+          result.push(current);
+          current = [];
+        } else if (type.isNumber(item)) {
+          current.push(item);
+        }
       }
 
-      case 0: // fallthrough
-      case 1: // fallthrough
-        error('Ranges', 'Use at least two values to define a range.');
-        break;
+      if (current.length) {
+        result.push(current);
+      }
 
-      default:
-        if (((rangeLength % 2) === 0) && ((rangeLength % 3) === 0)) {
-          error('Ranges', 'Use arrays to split range parts. Cannot determine pattern now.');
-        } else {
-          error('Ranges', 'Use arrays to split range parts properly.');
-        }
+      return (preventRecursion === true) ? result[0] : result;
     }
-  }
+
+  })();
+
+
 
 })();
