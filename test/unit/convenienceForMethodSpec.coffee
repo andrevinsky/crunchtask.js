@@ -28,23 +28,28 @@ describe 'CrunchTask convenience methods Spec.', ->
       expect(type(CrunchTask.rangeCheck)).toEqual('function')
       return
 
-    it 'declares static `rangeNextAndCheck` method', ()->
-      expect(CrunchTask.rangeNextAndCheck).toBeDefined()
-      expect(type(CrunchTask.rangeNextAndCheck)).toEqual('function')
+    it '`rangeCheck()` method returns an instance of Range class which has methods:`::valueOf()` and `::canAdvance([bool])`', ()->
+      range = CrunchTask.rangeCheck(1, 2, true)
+
+      expect(range.valueOf).toBeDefined()
+      expect(type(range.valueOf)).toEqual('function')
+
+      expect(range.canAdvance).toBeDefined()
+      expect(type(range.canAdvance)).toEqual('function')
       return
 
     return
 
   describe '`rangeCheck()` method parses the arguments into async-for-loop-ready structure', ()->
     it 'no arguments produces empty ranges array and is OK', ()->
-      expect(CrunchTask.rangeCheck()).toEqual([])
+      expect(CrunchTask.rangeCheck().valueOf()).toEqual([])
       return
     it 'only numerics, bools, and arrays are considered as args', ()->
       `var undef;`
-      expect(CrunchTask.rangeCheck('123', undef, /123/)).toEqual([])
+      expect(CrunchTask.rangeCheck('123', undef, /123/).valueOf()).toEqual([])
       return
     it 'a valid range is represented by the array of 3 numbers and an `inclusive` flag', ()->
-      expect(CrunchTask.rangeCheck(0, 9, .5, true)).toEqual([
+      expect(CrunchTask.rangeCheck(0, 9, .5, true).data).toEqual([
         {
           from: 0,
           current: 0,
@@ -53,55 +58,62 @@ describe 'CrunchTask convenience methods Spec.', ->
           inclusive: true
         } ])
       return
+
     it 'the first number represents a range\'s `from` value', ()->
       from = 5
-      expect(CrunchTask.rangeCheck(from, 9, .5, true)[0].from).toEqual(from)
+      expect(CrunchTask.rangeCheck(from, 9, .5, true).data[0].from).toEqual(from)
       from = -5
-      expect(CrunchTask.rangeCheck(from, 9, .5, true)[0].from).toEqual(from)
+      expect(CrunchTask.rangeCheck(from, 9, .5, true).data[0].from).toEqual(from)
       return
+
     it 'the second number represents a range\'s `to` value', ()->
       to = 5
-      expect(CrunchTask.rangeCheck(5, to, .5, true)[0].to).toEqual(to)
+      expect(CrunchTask.rangeCheck(5, to, .5, true).data[0].to).toEqual(to)
       to = -5
-      expect(CrunchTask.rangeCheck(5, to, .5, true)[0].to).toEqual(to)
+      expect(CrunchTask.rangeCheck(5, to, .5, true).data[0].to).toEqual(to)
       return
+
     it 'the third number represents a `step` value ', ()->
       step = 5
-      expect(CrunchTask.rangeCheck(0, 9, step, true)[0].step).toEqual(step)
+      expect(CrunchTask.rangeCheck(0, 9, step, true).data[0].step).toEqual(step)
       step = -5
-      expect(CrunchTask.rangeCheck(0, 9, step, true)[0].step).toEqual(step)
+      expect(CrunchTask.rangeCheck(0, 9, step, true).data[0].step).toEqual(step)
       step = .5
-      expect(CrunchTask.rangeCheck(0, 9, step, true)[0].step).toEqual(step)
+      expect(CrunchTask.rangeCheck(0, 9, step, true).data[0].step).toEqual(step)
       return
+
     it 'if the `step` is omitted, it defaults to +1 if (`from` <= `to`), and -1 otherwise', ()->
       from = 0
       to = 10
-      expect(CrunchTask.rangeCheck(from, to)[0].step).toEqual(+1)
+      expect(CrunchTask.rangeCheck(from, to).data[0].step).toEqual(+1)
       from = 10
       to = 10
-      expect(CrunchTask.rangeCheck(from, to)[0].step).toEqual(+1)
+      expect(CrunchTask.rangeCheck(from, to).data[0].step).toEqual(+1)
       from = 10
       to = 0
-      expect(CrunchTask.rangeCheck(from, to)[0].step).toEqual(-1)
+      expect(CrunchTask.rangeCheck(from, to).data[0].step).toEqual(-1)
       from = 0
       to = 10
-      expect(CrunchTask.rangeCheck(from, to, false)[0].step).toEqual(+1)
+      expect(CrunchTask.rangeCheck(from, to, false).data[0].step).toEqual(+1)
       from = 10
       to = 10
-      expect(CrunchTask.rangeCheck(from, to, false)[0].step).toEqual(+1)
+      expect(CrunchTask.rangeCheck(from, to, false).data[0].step).toEqual(+1)
       from = 10
       to = 0
-      expect(CrunchTask.rangeCheck(from, to, false)[0].step).toEqual(-1)
+      expect(CrunchTask.rangeCheck(from, to, false).data[0].step).toEqual(-1)
       return
+
     it 'if the `inclusive` is omitted, it defaults to `false`', ()->
-      expect(CrunchTask.rangeCheck(0, 9)[0].inclusive).toEqual(false);
-      expect(CrunchTask.rangeCheck(0, 9, .5)[0].inclusive).toEqual(false);
+      expect(CrunchTask.rangeCheck(0, 9).data[0].inclusive).toEqual(false);
+      expect(CrunchTask.rangeCheck(0, 9, .5).data[0].inclusive).toEqual(false);
       return
+
     it 'so the minimum of two numbers define a range `0,10` mean `from 0 to 10`', ()->
       expect(()->
         CrunchTask.rangeCheck(0, 9)
       ).not.toThrow()
       return
+
     it 'less than 2 numeric arguments do not represent a valid range and an error is thrown', ()->
       expect(()->
         CrunchTask.rangeCheck(0)
@@ -111,64 +123,74 @@ describe 'CrunchTask convenience methods Spec.', ->
         CrunchTask.rangeCheck(0,true)
       ).toThrow()
       return
+
     it 'two or more ranges can be defined in a flat list if `inclusive` flag is supplied for each', ()->
       expect(()->
         CrunchTask.rangeCheck(0, 9, 1, true, 9, 0, -1, true)
         CrunchTask.rangeCheck(0, 9, 1, true, 9, 0, -1, true, 5, 1, false)
       ).not.toThrow()
 
-      expect(CrunchTask.rangeCheck(0, 9, 1, true, 9, 0, -1, true)
+      expect(CrunchTask.rangeCheck(0, 9, 1, true, 9, 0, -1, true).data
       ).toEqual([
             { from: 0, current: 0, to: 9, step: 1, inclusive: true },
             { from: 9, current: 9, to: 0, step: -1, inclusive: true } ])
 
-      expect(CrunchTask.rangeCheck(0, 9, 1, true, 9, 0, -1, true, 5, 1, false)
+      expect(CrunchTask.rangeCheck(0, 9, 1, true, 9, 0, -1, true, 5, 1, false).data
       ).toEqual([
             { from: 0, current: 0, to: 9, step: 1, inclusive: true },
             { from: 9, current: 9, to: 0, step: -1, inclusive: true },
             { from: 5, current: 5, to: 1, step: -1, inclusive: false } ])
       return
+
     it 'this way, the bools serve as comma. Thus the last bool can be omitted if need be', ()->
       expect(()->
         CrunchTask.rangeCheck(0, 9, 1, true, 9, 0, -1, true, 5, 1)
       ).not.toThrow()
 
-      expect(CrunchTask.rangeCheck(0, 9, 1, true, 9, 0, -1, true, 5, 1)
+      expect(CrunchTask.rangeCheck(0, 9, 1, true, 9, 0, -1, true, 5, 1).data
       ).toEqual([
             { from: 0, current: 0, to: 9, step: 1, inclusive: true },
             { from: 9, current: 9, to: 0, step: -1, inclusive: true },
             { from: 5, current: 5, to: 1, step: -1, inclusive: false } ])
       return
+
     it 'however, this cannot be done safely for mid-list bools, they are obligatory', ()->
       expect(()->
         CrunchTask.rangeCheck(0, 9, 1, 9, 0, -1)
       ).toThrow()
+
       expect(()->
         CrunchTask.rangeCheck(0, 9, 1, 9, 0, -1, 5, 1)
       ).toThrow()
+
       expect(()->
         CrunchTask.rangeCheck(0, 9, 1, 9)
       ).toThrow()
       return
+
     it 'it can be advised to use arrays to group individual ranges', ()->
       expect(()->
         CrunchTask.rangeCheck([0, 9], [1, 9])
       ).not.toThrow()
       return
+
     it 'the same rules apply to these individual array as for the flat list args described above. Nested arrays are ignored, though', ()->
       expect(()->
         CrunchTask.rangeCheck([0, 9, [1, 9]])
       ).not.toThrow()
-      expect(CrunchTask.rangeCheck([0, 9, [1, 9]])
+
+      expect(CrunchTask.rangeCheck([0, 9, [1, 9]]).data
       ).toEqual([
             { from: 0, current: 0, to: 9, step: 1, inclusive: false } ])
       return
+
     it 'arrays can be mixed with the valid ranges chains with expected valid results', ()->
       result = null
       expect(()->
         result = CrunchTask.rangeCheck([0, 9], 9, 0, -.5, false, 9, 0, -.5, [1, 9, true], 9, 0, -.5, false,[0,5])
       ).not.toThrow()
-      expect(result).toEqual([
+
+      expect(result.data).toEqual([
         { from: 0, current: 0, to: 9, step: 1, inclusive: false },
         { from: 9, current: 9, to: 0, step: -0.5, inclusive: false },
         { from: 9, current: 9, to: 0, step: -0.5, inclusive: false },
@@ -176,13 +198,15 @@ describe 'CrunchTask convenience methods Spec.', ->
         { from: 9, current: 9, to: 0, step: -0.5, inclusive: false },
         { from: 0, current: 0, to: 5, step: 1, inclusive: false } ])
       return
+
     it 'ranges can be used to imitate binary permutation', ()->
-      expect(CrunchTask.rangeCheck(0, 1, true, 0, 1, true, 0, 1, true)
+      expect(CrunchTask.rangeCheck(0, 1, true, 0, 1, true, 0, 1, true).data
       ).toEqual([
             { from: 0, current: 0, to: 1, step: 1, inclusive: true },
             { from: 0, current: 0, to: 1, step: 1, inclusive: true },
             { from: 0, current: 0, to: 1, step: 1, inclusive: true } ])
       return
+
     return
 
   describe '`rangeNextAndCheck()` method tries to advance the current position of the ranges structure', ()->
@@ -193,44 +217,51 @@ describe 'CrunchTask convenience methods Spec.', ->
     )
 
     it 'advances the elements of the range structure and responds whether it has not reached the end yet (hasn\'t looped over)', ()->
-      expect(CrunchTask.rangeNextAndCheck(range)).toBe(true)
+      expect(range.canAdvance()).toBe(true)
       return
+
     it 'inclusive range of [0..1] reaches the end in two calls.', ()->
-      expect(CrunchTask.rangeNextAndCheck(range)).toBe(true)
-      expect(CrunchTask.rangeNextAndCheck(range)).toBe(false)
+      expect(range.canAdvance()).toBe(true)
+      expect(range.canAdvance()).toBe(false)
       return
+
     it 'so does the inclusive range of [1..0]', ()->
       range = CrunchTask.rangeCheck(1, 0, true)
-      expect(CrunchTask.rangeNextAndCheck(range)).toBe(true)
-      expect(CrunchTask.rangeNextAndCheck(range)).toBe(false)
+      expect(range.canAdvance()).toBe(true)
+      expect(range.canAdvance()).toBe(false)
       return
+
     it 'non-inclusive range of [0..1) reaches end with each call', ()->
       range = CrunchTask.rangeCheck(0, 1)
-      expect(CrunchTask.rangeNextAndCheck(range)).toBe(false)
+      expect(range.canAdvance()).toBe(false)
       return
+
     it 'a non-inclusive range of [0..1) with step .5 reaches end with two calls', ()->
       range = CrunchTask.rangeCheck(0, 1, .5)
-      expect(CrunchTask.rangeNextAndCheck(range)).toBe(true)
-      expect(CrunchTask.rangeNextAndCheck(range)).toBe(false)
+      expect(range.canAdvance()).toBe(true)
+      expect(range.canAdvance()).toBe(false)
       return
+
     it 'so does the reverse range of [1..0) with step -.5', ()->
       range = CrunchTask.rangeCheck(1, 0, -.5)
-      expect(CrunchTask.rangeNextAndCheck(range)).toBe(true)
-      expect(CrunchTask.rangeNextAndCheck(range)).toBe(false)
+      expect(range.canAdvance()).toBe(true)
+      expect(range.canAdvance()).toBe(false)
       return
+
     it 'it takes four iterations to iterate fully two binary ranges [0..1]&[0..1]', ()->
       range = CrunchTask.rangeCheck(0, 1, true, 0, 1, true)
-      expect(CrunchTask.rangeNextAndCheck(range)).toBe(true)
-      expect(CrunchTask.rangeNextAndCheck(range)).toBe(true)
-      expect(CrunchTask.rangeNextAndCheck(range)).toBe(true)
-      expect(CrunchTask.rangeNextAndCheck(range)).toBe(false)
+      expect(range.canAdvance()).toBe(true)
+      expect(range.canAdvance()).toBe(true)
+      expect(range.canAdvance()).toBe(true)
+      expect(range.canAdvance()).toBe(false)
       return
+
     it 'doesn\'t work this way if `inclusive` isn\'t set to `true`', ()->
       range = CrunchTask.rangeCheck(0, 1, false, 0, 1, false)
-      expect(CrunchTask.rangeNextAndCheck(range)).toBe(false)
-      expect(CrunchTask.rangeNextAndCheck(range)).toBe(false)
-      expect(CrunchTask.rangeNextAndCheck(range)).toBe(false)
-      expect(CrunchTask.rangeNextAndCheck(range)).toBe(false)
+      expect(range.canAdvance()).toBe(false)
+      expect(range.canAdvance()).toBe(false)
+      expect(range.canAdvance()).toBe(false)
+      expect(range.canAdvance()).toBe(false)
       return
 
     return
