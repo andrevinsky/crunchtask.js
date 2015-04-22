@@ -594,18 +594,46 @@ jasmine.version= #{jasmine.version}
 
       return
 
-    it 'A task can be chained with another task by the `then()` method, creating a new task.', ->
+    it 'A task\'s result can be chained to another task(s) or function(s) by the `then()` method, creating a new task.', ->
       result1 = new CrunchTask (init, body, fin)->
         return
 
       result2 = new CrunchTask (init, body, fin)->
         return
 
-      result3 = result1.then(result2)
+      fn1 = ()->
+        return
 
-      expect(result3).not.toEqual(result1)
+      fn2 = ()->
+        return
+
+      result3 = result1.then(result2)
+      result4 = result1.then(fn1)
+      result5 = result1.then(fn2)
+      result6 = result1.then(fn1, fn2)
+
       expect(result3).not.toEqual(result2)
+      expect(result3).not.toEqual(result1)
       expect(result3 instanceof CrunchTask).toEqual(true)
+
+      expect(result4).not.toEqual(result3)
+      expect(result4).not.toEqual(result2)
+      expect(result4).not.toEqual(result1)
+      expect(result4 instanceof CrunchTask).toEqual(true)
+
+      expect(result5).not.toEqual(result4)
+      expect(result5).not.toEqual(result3)
+      expect(result5).not.toEqual(result2)
+      expect(result5).not.toEqual(result1)
+      expect(result5 instanceof CrunchTask).toEqual(true)
+
+      expect(result6).not.toEqual(result5)
+      expect(result6).not.toEqual(result4)
+      expect(result6).not.toEqual(result3)
+      expect(result6).not.toEqual(result2)
+      expect(result6).not.toEqual(result1)
+      expect(result6 instanceof CrunchTask).toEqual(true)
+
       return
 
     return
