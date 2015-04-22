@@ -278,14 +278,21 @@ describe 'CrunchTask convenience methods Spec.', ->
 
   describe 'the `for()` method', ()->
     foo = {}
+    jasmineTimeout = 5000
 
     beforeEach(()->
+      jasmineTimeout = jasmine.DEFAULT_TIMEOUT_INTERVAL
+      jasmine.DEFAULT_TIMEOUT_INTERVAL = 15000
       foo.bar = (() ->
+      )
+      foo.baz = (() ->
       )
     )
 
     afterEach ()->
+      jasmine.DEFAULT_TIMEOUT_INTERVAL = jasmineTimeout
       delete foo.bar
+      delete foo.baz
 
     it 'once called, the `for()` method creates a CrunchTask instance', ()->
       forLoop = CrunchTask.for(()->)
@@ -397,6 +404,54 @@ describe 'CrunchTask convenience methods Spec.', ->
         expect(foo.bar).toHaveBeenCalled()
         done()
       , 1000)
+      return
+
+    it 'if a task is used in combination with the `for()` method as a body executable, onIdle is generated upon completion of the task, not the loop', (done)->
+
+#      console.log "jasmine.DEFAULT_TIMEOUT_INTERVAL: #{jasmine.DEFAULT_TIMEOUT_INTERVAL}"
+
+      waitSize = 33
+
+      bodyTask = new CrunchTask (init, body)->
+        countMemo = {
+          count: waitSize
+        }
+        init (_x, _y)->
+          return
+        body (resolve)->
+          do resolve unless countMemo.count--
+        return
+
+      timestamps = []
+
+      forTaskEmpty = CrunchTask.for([0, waitSize], [0, waitSize], (x, y)-> x)
+      forTaskLoaded = CrunchTask.for([0, waitSize], [0, waitSize], bodyTask)
+
+      forTaskEmpty.onIdle ()->
+        timestamps.push (new Date() - 0)
+
+
+      bodyTask.onIdle ()->
+
+      forTaskLoaded.onIdle ()->
+        timestamps.push (new Date() - 0)
+        expect(timestamps.length).toBe(3)
+        expect(timestamps[2] > timestamps[1]).toEqual(true)
+        expect(timestamps[1] > timestamps[0]).toEqual(true)
+        expect((timestamps[2] - timestamps[1]) > (timestamps[1] - timestamps[0])).toEqual(true)
+
+        done()
+        return
+
+#      console.log "Start"
+      timestamps.push (new Date() - 0)
+#      console.log JSON.stringify timestamps
+
+      forTaskEmpty.run().then(()->
+        forTaskLoaded.run()
+        return
+      )
+
       return
 
     return
