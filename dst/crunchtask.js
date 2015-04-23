@@ -202,7 +202,7 @@
 
   var type = (/**
    *
-   * @returns {{isFunction(),isArray(),isBoolean(),isNumber(),isUndefined()}}
+   * @returns {{isFunction(),isArray(),isBoolean(),isNumber(),isUndefined(),isObject()}}
    */
     function () {
 
@@ -211,7 +211,7 @@
       __toString = Object.prototype.toString,
       _undef,
       sourceTypes = [true, 1, [], function () {
-      }, _undef],
+      }, _undef, {}],
       classNamePattern = /\s+(\w+)]/,
       fullName,
       originalName; // PhantomJS bug
@@ -272,6 +272,19 @@
     root.CrunchTask = CrunchTask;
   }
 
+  var config = {
+      timeLimit: 100,
+      timeoutAmount: 0,
+      debug: false
+    }, defaultConfig = {
+      timeLimit: 100,
+      timeoutAmount: 0,
+      debug: false
+    },
+    staticParentTask = null,
+    staticSecurityLock = false,
+    staticLastSafeError = null;
+
   /**
    * @deprecated use range
    * @type {staticFor}
@@ -288,6 +301,29 @@
   };
   CrunchTask.forEach = staticForEach;
   CrunchTask.reduce = staticReduce;
+
+  /**
+   *
+   * @param {{boolean}|{ timeLimit:Number, timeoutAmount:Number, debug:boolean }} obj
+   */
+  CrunchTask.config = function(obj) {
+    if (!type.isObject(obj)) {
+      return CrunchTask.config(defaultConfig);
+    }
+    var result = {};
+    for (var prop in obj) {
+      //noinspection JSUnfilteredForInLoop
+      if (__hasOwnProperty.call(obj, prop) && __hasOwnProperty.call(config, prop)) {
+        //noinspection JSUnfilteredForInLoop
+        config[prop] = obj[prop];
+        //noinspection JSUnfilteredForInLoop
+        result[prop] = obj[prop];
+      }
+    }
+    return result;
+  };
+
+  CrunchTask.config(false);
 
   var uid = 0;
 
@@ -334,9 +370,6 @@
       'success', 'failure',
       'error', 'aborted'
     ]);
-
-  var staticParentTask = null,
-    staticSecurityLock = false;
 
   /**
    * For each property assigns a value based on a prefix and the property name
@@ -477,25 +510,22 @@
    */
   function _trigger(hive, evt /*, args*/) {
     var args1 = __slice.call(arguments, 2);
-    //if ((args1.length === 1) && (type.isArray(args1[0]))) {
-    //  // unwrap
-    //  args1 = args1[0];
-    //}
     if (!hive[evt]) {
       return;
     }
     var handlers = hive[evt];
-    for (var pair, handler, args0, i = 0, maxI = handlers.length; i < maxI; i++) {
-      pair = handlers[i];
-      handler = pair[0];
-      args0 = pair[1];
+    for (var handler, args0, i = 0, maxI = handlers.length; i < maxI; i++) {
+      handler = handlers[i][0];
+      args0 = handlers[i][1];
       if (!handler) {
         continue;
       }
       try {
         handler.apply(this, [].concat(args0, args1));
       } catch (e) {
-        console.info(e);
+        if (config.debug) {
+          console.log(e + ', stack: ' + e.stack);
+        }
       }
     }
   }
@@ -504,7 +534,7 @@
    * Queues execution of this function asynchronously
    * @param {number} timeoutAmount
    * @param {function} fn
-   * @param {[]} args0
+   * @param {[]} [args0]
    */
   function defer(timeoutAmount, fn, args0) {
     var ctx = this;
@@ -527,9 +557,8 @@
       //noinspection JSValidateTypes
       ctx = this;
     }
-    if (type.isUndefined(fn)) {
-      fn = function () {
-      };
+    if (!type.isFunction(fn)) {
+      fn = function () { };
     }
     return function () {
       var args0 = __slice.call(arguments, 0);
@@ -537,6 +566,10 @@
         fn.apply(ctx, args0);
         return true;
       } catch (e) {
+        staticLastSafeError = e;
+        if (config.debug) {
+          console.log(e + ', stack: ' + e.stack);
+        }
         return false;
       }
     };
@@ -574,8 +607,7 @@
           }
         );
 
-        defer.call(runCtx,
-          0, proceedDescriptionFn, [instanceApi]);
+        defer.call(runCtx, 0, proceedDescriptionFn, [instanceApi]);
       };
 
     return overloadPromise(new Promise(promiseFn), instanceApi, encapsulation);
@@ -659,7 +691,7 @@
         ctx.bodyFn = safe(thisTask, _bodyFn);
         ctx.conditionsToMeet--;
 
-        ctx.needRepeat = _needRepeat; //((_needRepeat !== false) ? (_needRepeat || 100) : _needRepeat);
+        ctx.needRepeat = _needRepeat;
         ctx.timeoutAmount = _timeout;
       },
 
@@ -787,7 +819,7 @@
         delete ctx.parentTask;
         delete taskP.childTask;
 
-      }, []);
+      });
     }
 
     function decreaseRunning(thisTask) {
@@ -810,7 +842,7 @@
           }
           staticSecurityLock = true;
           thisTask._signalIdle();
-        }, []);
+        });
       }
 
     }
@@ -890,6 +922,9 @@
             });
 
           } catch (ex) {
+            if (config.debug) {
+              console.log(ex + ', stack: ' + ex.stack);
+            }
             instanceApi.signalError('body', ex);
           }
 
@@ -1073,7 +1108,7 @@
         if (!canRunCycle || !ranges.canAdvance()) {
           resolve();
         }
-      }, 100);
+      }, config.timeLimit, config.timeoutAmount);
 
       fin(function () {
         tailFn(ranges.valueOf());
@@ -1110,7 +1145,7 @@
         if (!canRunCycle || !ranges.canAdvance()) {
           resolve(memoInternal);
         }
-      }, 100);
+      }, config.timeLimit, config.timeoutAmount);
 
       fin(function () {
         tailFn(memoInternal, ranges.valueOf());
@@ -1144,7 +1179,7 @@
         if (!canRunCycle || !ranges.canAdvance()) {
           resolve();
         }
-      }, 100);
+      }, config.timeLimit, config.timeoutAmount);
 
       fin(function () {
         tailFn(ranges.valueOf());

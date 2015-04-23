@@ -8,14 +8,15 @@ ChrunchTask.js supports chaining the tasks execution and is designed to be used 
 
 ## Using
 
-ChrunchTask.js can be used thus:
+ChrunchTask.js can be used in browsers:
 
-    bower install chrunchtask
+    bower install chrunchtask --save
 
-or if you're using nodejs,
+or in nodejs,
 
-    bower install chrunchtask
+    npm install chrunchtask --save
 
+for all kinds of asynchronously run tasks that might make your program unresponsive.
 
 ## Usage Example
 
