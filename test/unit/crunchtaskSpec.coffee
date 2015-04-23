@@ -220,28 +220,34 @@ jasmine.version= #{jasmine.version}
     it 'The task\'s results (passed to `resolve()`/`reject()`) are wrapped into an array to present a single argument for Promise `then()` listeners, and are passed as given to the Task\'s result handlers.', (done) ->
 
       foo = {
-        resolvePromiseCallback: (arg) ->
-          expect(arg).toEqual([123])
+        resolvePromiseCallback: (arg1, arg2) ->
+          expect(arg1).toEqual([[123, '567']])
+          expect(arg2).toBeUndefined()
           return
 
-        rejectPromiseCallback: (arg) ->
-          expect(arg).toEqual([456])
+        rejectPromiseCallback: (arg1, arg2) ->
+          expect(arg1).toEqual([false, 456])
+          expect(arg2).toBeUndefined()
           return
 
-        resolveTaskCallback: (arg) ->
-          expect(arg).toEqual(123)
+        resolveTaskCallback: (arg1, arg2) ->
+          expect(arg1).toEqual([123, '567'])
+          expect(arg2).toBeUndefined()
           return
 
-        rejectTaskCallback: (arg) ->
-          expect(arg).toEqual(456)
+        rejectTaskCallback: (arg1, arg2) ->
+          expect(arg1).toEqual(false)
+          expect(arg2).toEqual(456)
           return
 
-        resolveRunInstanceCallback: (arg) ->
-          expect(arg).toEqual(123)
+        resolveRunInstanceCallback: (arg1, arg2) ->
+          expect(arg1).toEqual([123, '567'])
+          expect(arg2).toBeUndefined()
           return
 
-        rejectRunInstanceCallback: (arg) ->
-          expect(arg).toEqual(456)
+        rejectRunInstanceCallback: (arg1, arg2) ->
+          expect(arg1).toEqual(false)
+          expect(arg2).toEqual(456)
           return
       }
 
@@ -254,13 +260,13 @@ jasmine.version= #{jasmine.version}
 
       task1 = new CrunchTask (init, body, fin)->
         body (resolve, reject)->
-          resolve 123
+          resolve [123, '567']
           return
         return
 
       task2 = new CrunchTask (init, body, fin)->
         body (resolve, reject)->
-          reject 456
+          reject false, 456
           return
         return
 
@@ -497,18 +503,18 @@ jasmine.version= #{jasmine.version}
       idleCount = 0
       task.onRun ()->
         runCount++
-        console.log "onRun. task.id=#{task.id} runCount=#{runCount}, idleCount=#{idleCount}"
-        console.log "(onRun). task.runCount=#{task.runCount}"
+#        console.log "onRun. task.id=#{task.id} runCount=#{runCount}, idleCount=#{idleCount}"
+#        console.log "(onRun). task.runCount=#{task.runCount}"
         return
 
       task.always () ->
-        console.log "always. task.id=#{task.id} task.runCount=#{task.runCount}"
+#        console.log "always. task.id=#{task.id} task.runCount=#{task.runCount}"
         return
 
       task.onIdle () ->
         idleCount++
-        console.log "onIdle. task.id=#{task.id} runCount=#{runCount}, idleCount=#{idleCount}"
-        console.log "(onIdle). task.runCount=#{task.runCount}"
+#        console.log "onIdle. task.id=#{task.id} runCount=#{runCount}, idleCount=#{idleCount}"
+#        console.log "(onIdle). task.runCount=#{task.runCount}"
 
         foo.onIdleHandler()
         setTimeout finalExpectations, 50

@@ -1,3 +1,4 @@
+/*! crunchtask - v0.8.9 - 2015-04-24 */
 (function() {
     var root;
 
@@ -185,6 +186,7 @@
 	};
 })();
 /**
+ * @preserve
  * Created by ANDREW on 10/10/2014.
  * @requires 'bower_components/promise-polyfill'
  */
@@ -475,10 +477,10 @@
    */
   function _trigger(hive, evt /*, args*/) {
     var args1 = __slice.call(arguments, 2);
-    if ((args1.length === 1) && (type.isArray(args1[0]))) {
-      // unwrap
-      args1 = args1[0];
-    }
+    //if ((args1.length === 1) && (type.isArray(args1[0]))) {
+    //  // unwrap
+    //  args1 = args1[0];
+    //}
     if (!hive[evt]) {
       return;
     }
