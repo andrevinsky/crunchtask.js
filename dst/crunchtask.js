@@ -1,4 +1,4 @@
-/*! crunchtask - v0.8.9 - 2015-04-24 */
+/*! crunchtask - v0.8.10 - 2015-04-24 */
 (function() {
     var root;
 
@@ -294,7 +294,7 @@
   CrunchTask.rangeCheck = normalizeRanges;
   /**
    * @deprecated use range
-   * @type {staticFor}
+   * @type {Range}
    */
   CrunchTask.rangeNextAndCheck = function(range, checkOnly) {
     return range.canAdvance(checkOnly);
@@ -627,7 +627,9 @@
 
       done  : _fnPartial(promise, instanceApi.runEventsOn, EVENT_NAMES.done),
       fail  : _fnPartial(promise, instanceApi.runEventsOn, EVENT_NAMES.fail),
-      always: _fnPartial(promise, instanceApi.runEventsOn, [EVENT_NAMES.done, EVENT_NAMES.fail, EVENT_NAMES.error].join())
+      always: _fnPartial(promise, instanceApi.runEventsOn, [EVENT_NAMES.done, EVENT_NAMES.fail, EVENT_NAMES.error].join()),
+
+      progress  : _fnPartial(promise, instanceApi.runEventsOn, EVENT_NAMES.progress)
     });
   }
 

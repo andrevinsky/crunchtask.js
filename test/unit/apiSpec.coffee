@@ -153,6 +153,11 @@ describe 'CrunchTask API Spec.', ->
       expect(type(runInst.onError)).toEqual('function')
       return
 
+    it 'method `progress()` - ', ->
+      expect(runInst.progress).toBeDefined()
+      expect(type(runInst.progress)).toEqual('function')
+      return
+
     return
 
   describe 'Errors are events happening during task runtime and usually signify exceptions', ->
