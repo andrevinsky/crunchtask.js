@@ -48,6 +48,11 @@ describe 'CrunchTask convenience methods Spec.', ->
       expect(type(CrunchTask.reduce)).toEqual('function')
       return
 
+    it 'declares static `config()` method', ()->
+      expect(CrunchTask.config).toBeDefined()
+      expect(type(CrunchTask.config)).toEqual('function')
+      return
+
     return
 
   describe '`rangeCheck()` method parses the arguments into async-for-loop-ready structure', ()->
@@ -491,6 +496,55 @@ describe 'CrunchTask convenience methods Spec.', ->
         done()
       task.run()
     return
+
+  describe 'the `config()` method', ()->
+    it 'sets known global config parameters or resets the entire config file', ()->
+      result1 = CrunchTask.config({
+        timeLimit: 50
+      });
+      CrunchTask.for(0, 10, false, (n)->
+        # will execute the for-loop with a limit of 50 seconds (to setTImeout again)
+      )
+      expect(result1.timeLimit).toEqual(50)
+      expect(result1.timeoutAmount).toBeUndefined()
+      expect(result1.debug).toBeUndefined()
+
+      result2 = CrunchTask.config({
+        timeoutAmount: 1000
+      })
+      CrunchTask.for(0, 10, false, (n)->
+        # will execute the for-loop with a 1 second delay each
+      )
+      expect(result2.timeLimit).toBeUndefined()
+      expect(result2.timeoutAmount).toEqual(1000)
+      expect(result2.debug).toBeUndefined()
+
+
+      result3 = CrunchTask.config({
+        debug: true
+      })
+      expect(result3.timeLimit).toBeUndefined()
+      expect(result3.timeoutAmount).toBeUndefined()
+      expect(result3.debug).toEqual(true)
+
+      result4 = CrunchTask.config({
+        timeLimit: 0
+        timeoutAmount: 2000
+        debug: true
+      })
+      CrunchTask.for(0, 10, false, (n)->
+        # will execute the for-loop with a 2 seconds delay each, + debug info into console
+      )
+      expect(result4.timeLimit).toEqual(0)
+      expect(result4.timeoutAmount).toEqual(2000)
+      expect(result4.debug).toEqual(true)
+
+
+      result5 = CrunchTask.config(false) # resets back to normal
+
+      expect(result5.timeLimit).toEqual(100)
+      expect(result5.timeoutAmount).toEqual(0)
+      expect(result5.debug).toEqual(false)
 
 
   return
