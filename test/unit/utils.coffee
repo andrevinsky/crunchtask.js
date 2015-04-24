@@ -34,4 +34,4 @@ if (typeof module isnt 'undefined' && module.exports)
     whenAll: whenAll
   }
 
-console.log "UTILS LOADED"
+console.log "UTILS LOADED "

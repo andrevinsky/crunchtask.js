@@ -56,7 +56,7 @@ for(var i = 0; i < 1000; i++) {
 
 ```
 
-Refer towards the end of the spec unit-test file (`test/unit/crunchtaskSpec.coffee`) for the working example.
+Refer towards the end of the spec unit-test file (`test/unit/step01CrunchtaskSpec.coffee`) for the working example.
 
 ## How do we come to this setup?
 

@@ -1,4 +1,4 @@
-/*! crunchtask - v0.8.11 - 2015-04-24 */
+/*! crunchtask - v0.8.12 - 2015-04-24 */
 (function() {
     var root;
 
@@ -870,10 +870,11 @@
       (ctx.conditionsToMeet === 0)) {
 
       var _needRepeat = ctx.needRepeat;
-      _needRepeat = ((_needRepeat !== false) ? (_needRepeat || 0) : _needRepeat);
+      _needRepeat = ((_needRepeat === false) ? _needRepeat
+        : ((_needRepeat === 0) ? _needRepeat : _needRepeat || config.timeLimit));
 
       ctx.needRepeat = (_needRepeat === 0) ? true : _needRepeat;
-      ctx.timeoutAmount = ctx.timeoutAmount || 0;
+      ctx.timeoutAmount = ctx.timeoutAmount || config.timeoutAmount;
 
       instanceApi.goRunning();
 
