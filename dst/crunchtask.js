@@ -1,4 +1,4 @@
-/*! crunchtask - v0.8.10 - 2015-04-24 */
+/*! crunchtask - v0.8.11 - 2015-04-24 */
 (function() {
     var root;
 
@@ -469,8 +469,8 @@
     var auxFns = __slice.call(arguments, 0);
     return function () {
       var args = __slice.call(arguments, 0),
-        auxFn;
-      while ((auxFn = auxFns.shift()) && type.isFunction(auxFn)) {
+        auxFn, fnsCopy = [].concat(auxFns);
+      while ((auxFn = fnsCopy.shift()) && type.isFunction(auxFn)) {
         auxFn.apply(this, args);
       }
     };
