@@ -421,6 +421,7 @@ jasmine.version= #{jasmine.version}
         timeoutBetweenTwoSecondBodyCalls = Math.abs(bodyThirdRun - bodySecondRun)
 
         precision = -Math.log10( 100 * 2) # +/-100ms
+        # TODO: provide fix
         expect(timeoutBetweenInitAndBody).toBeCloseTo(0, precision)
         expect(timeoutBetweenTwoFirstBodyCalls).toBeCloseTo(executionTimeout, precision)
         expect(timeoutBetweenTwoSecondBodyCalls).toBeCloseTo(executionTimeout, precision)
