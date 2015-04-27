@@ -287,7 +287,10 @@ describe 'CrunchTask convenience methods Spec.', ->
 
     beforeEach(()->
       jasmineTimeout = jasmine.DEFAULT_TIMEOUT_INTERVAL
-      jasmine.DEFAULT_TIMEOUT_INTERVAL = 15000
+#      jasmine.DEFAULT_TIMEOUT_INTERVAL = 15000
+
+#      console.info CrunchTask.config(false)
+
       foo.bar = (() ->
       )
       foo.baz = (() ->
@@ -466,25 +469,34 @@ describe 'CrunchTask convenience methods Spec.', ->
     it 'enumerates a long array in async fashion', (done)->
       length = 50000
       count = 0
+#      console.log new Date() - 0
       task = CrunchTask.forEach(new Array(length), (v, k)->
+#        console.log new Date() - 0 unless k % 10000
         expect(type(v)).toBe('undefined')
         expect(k).toEqual(count)
         count++
       )
-      task.run()
-      setTimeout( ()->
+      task.run().always(()->
+#        console.log new Date() - 0
         expect(count).toEqual(length)
         done()
-      ,4000)
+      )
       return
 
     return
 
   describe 'the `reduce()` method', ()->
+    beforeEach ()->
+      CrunchTask.config(false)
+
     it 'enumerates a long array and collects data in async fashion', (done)->
-      length = 50000
+      length = 45000
       count = 0
       memo = 0
+#      console.log (global || window).agent
+      CrunchTask.config({
+        timeLimit: 150
+      })
       task = CrunchTask.reduce(new Array(length), memo, (memo, v, k)->
         memo += k % 2
         expect(type(v)).toBe('undefined')
@@ -498,6 +510,9 @@ describe 'CrunchTask convenience methods Spec.', ->
     return
 
   describe 'the `config()` method', ()->
+    beforeEach ()->
+      CrunchTask.config(false)
+
     it 'sets known global config parameters or resets the entire config file', ()->
       result1 = CrunchTask.config({
         timeLimit: 50

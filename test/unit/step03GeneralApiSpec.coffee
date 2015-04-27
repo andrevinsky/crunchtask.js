@@ -224,7 +224,7 @@ describe 'CrunchTask API Spec.', ->
       setTimeout ()->
         expect(foo.errorTaskOkHandler).not.toHaveBeenCalled()
         expect(foo.errorRunTaskOkHandler).not.toHaveBeenCalled()
-
+        task.abort()
         done()
       ,10
 
