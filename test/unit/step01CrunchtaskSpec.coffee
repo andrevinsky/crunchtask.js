@@ -16,18 +16,19 @@ whenAll = root.whenAll || utils.whenAll
 describe 'TaskCruncher Specification ', ->
 
   it 'Use Jasmine with Version 2.xx', ->
-    console.log "\r\n
+    console.log "
 jasmine.version= #{jasmine.version}
-\r\n"
+jasmine.DEFAULT_TIMEOUT_INTERVAL = #{ jasmine.DEFAULT_TIMEOUT_INTERVAL}
+"
     expect(jasmine.version).toMatch(/^2\./);
     return
 
 
   describe 'Usage Patterns: ', ->
     task = null
-    console.log "jasmine.DEFAULT_TIMEOUT_INTERVAL = #{ jasmine.DEFAULT_TIMEOUT_INTERVAL}"
 
     beforeEach () ->
+#      console.info CrunchTask.config(false)
       return
 
     afterEach ()->
@@ -411,17 +412,21 @@ jasmine.version= #{jasmine.version}
         return
 
       task.done ->
+        CrunchTask.config(false);
         initStarted = foo.bar.calls.argsFor(0)[0]
         bodyFirstRun = foo.bar.calls.argsFor(1)[0]
         bodySecondRun = foo.bar.calls.argsFor(2)[0]
         bodyThirdRun = foo.bar.calls.argsFor(3)[0]
 
+#        console.log initStarted, bodyFirstRun, bodySecondRun, bodyThirdRun
+
         timeoutBetweenInitAndBody = Math.abs(bodyFirstRun - initStarted)
         timeoutBetweenTwoFirstBodyCalls = Math.abs(bodySecondRun - bodyFirstRun)
         timeoutBetweenTwoSecondBodyCalls = Math.abs(bodyThirdRun - bodySecondRun)
 
+#        console.log timeoutBetweenInitAndBody, timeoutBetweenTwoFirstBodyCalls, timeoutBetweenTwoSecondBodyCalls
+
         precision = -Math.log10( 100 * 2) # +/-100ms
-        # TODO: provide fix
         expect(timeoutBetweenInitAndBody).toBeCloseTo(0, precision)
         expect(timeoutBetweenTwoFirstBodyCalls).toBeCloseTo(executionTimeout, precision)
         expect(timeoutBetweenTwoSecondBodyCalls).toBeCloseTo(executionTimeout, precision)
