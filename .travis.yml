@@ -13,5 +13,5 @@ before_script:
   - bower install
 script:
   - grunt test
-  - jasmine-node --forceExit --coffee test/unit/step01CrunchtaskSpec.coffee test/unit/step02DeclarationInstantiationSpec.coffee test/unit/step03GeneralApiSpec.coffee test/unit/step04ChainabilityApiSpec.coffee test/unit/step06CrunchtaskEventsSpec.coffee test/unit/step05ConvenienceForMethodSpec.coffee
+#  - jasmine-node --forceExit --coffee test/unit/step01CrunchtaskSpec.coffee test/unit/step02DeclarationInstantiationSpec.coffee test/unit/step03GeneralApiSpec.coffee test/unit/step04ChainabilityApiSpec.coffee test/unit/step06CrunchtaskEventsSpec.coffee test/unit/step05ConvenienceForMethodSpec.coffee
 
