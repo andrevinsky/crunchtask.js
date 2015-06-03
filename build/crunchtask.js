@@ -25,7 +25,7 @@ function _arrayToObject(arr, value) {
 }
 
 module.exports = _arrayToObject;
-},{"./type":14}],2:[function(require,module,exports){
+},{"./type":33}],2:[function(require,module,exports){
 /**
  * Created by ANDREW on 6/3/2015.
  */
@@ -56,6 +56,45 @@ module.exports = _fnBind;
  */
 'use strict';
 
+var __hasOwnProperty = {}.hasOwnProperty,
+  __slice = [].slice;
+
+var type = require('./type'),
+  bind = require('./bind');
+
+/**
+ * Executes the `fn` function in context of `ctx` and returns if result or `ctx` for chainability
+ * @param ctx
+ * @param {{}} target
+ * @param {{}} source
+ * @returns {{}}
+ */
+function _fnBindAll(ctx, target, source) {
+  var method;
+
+  for (var prop in source) {
+    //noinspection JSUnfilteredForInLoop
+    if (__hasOwnProperty.call(source, prop)) {
+      //noinspection JSUnfilteredForInLoop
+      method = source[prop];
+
+      if (type.isFunction(method)) {
+        //noinspection JSUnfilteredForInLoop
+        target[prop] = bind(ctx, method);
+      }
+    }
+  }
+
+  return target;
+}
+
+module.exports = _fnBindAll;
+},{"./bind":2,"./type":33}],4:[function(require,module,exports){
+/**
+ * Created by ANDREW on 6/3/2015.
+ */
+'use strict';
+
 var config = {
   trace: false,
   timeLimit: 100,
@@ -72,7 +111,100 @@ module.exports = {
   config: config,
   defaultConfig: defaultConfig
 };
-},{}],4:[function(require,module,exports){
+},{}],5:[function(require,module,exports){
+/**
+ * Created by ANDREW on 6/4/2015.
+ */
+'use strict';
+
+var mirror = require('./mirror');
+
+var EVENT_NAMES = mirror({
+  run     : null,
+  done    : null,
+  fail    : null,
+  abort   : null,
+  error   : null,
+  progress: null,
+  idle    : null
+}, 'event.');
+
+module.exports = EVENT_NAMES;
+},{"./mirror":28}],6:[function(require,module,exports){
+/**
+ * Created by ANDREW on 6/4/2015.
+ */
+'use strict';
+
+var arrayToObject = require('./arrayToObject'),
+  STATE_NAMES = require('./constStateNames');
+
+var NEED_REPEAT_STATES = arrayToObject([
+  STATE_NAMES.running,
+  STATE_NAMES.paused
+], true);
+
+module.exports = NEED_REPEAT_STATES;
+},{"./arrayToObject":1,"./constStateNames":8}],7:[function(require,module,exports){
+/**
+ * Created by ANDREW on 6/4/2015.
+ */
+'use strict';
+
+var arrayToObject = require('./arrayToObject'),
+  STATE_NAMES = require('./constStateNames');
+
+var SETTLED_STATES = arrayToObject([
+  STATE_NAMES.error,
+  STATE_NAMES.resolved,
+  STATE_NAMES.rejected,
+  STATE_NAMES.aborted
+], true);
+
+module.exports = SETTLED_STATES;
+},{"./arrayToObject":1,"./constStateNames":8}],8:[function(require,module,exports){
+/**
+ * Created by ANDREW on 6/4/2015.
+ */
+'use strict';
+
+var mirror = require('./mirror');
+
+var STATE_NAMES = mirror({
+  init    : null,
+  error   : null,
+  running : null,
+  paused  : null,
+  resolved: null,
+  rejected: null,
+  aborted : null
+}, 'state.');
+
+module.exports = STATE_NAMES;
+},{"./mirror":28}],9:[function(require,module,exports){
+/**
+ * Created by ANDREW on 6/4/2015.
+ */
+'use strict';
+
+var arrayToObject = require('./arrayToObject'),
+  STATE_NAMES = require('./constStateNames');
+
+var VERBOSE_STATES = arrayToObject([
+  STATE_NAMES.resolved,
+  STATE_NAMES.rejected,
+  STATE_NAMES.error,
+  STATE_NAMES.aborted
+], [
+  'success',
+  'failure',
+  'error',
+  'aborted'
+]);
+
+module.exports = VERBOSE_STATES;
+
+},{"./arrayToObject":1,"./constStateNames":8}],10:[function(require,module,exports){
 (function (process){
 /**
  * @preserve
@@ -83,575 +215,307 @@ module.exports = {
 
   'use strict';
 
-  /* jshint -W040 */
+  var CrunchTaskImpl = require('./typeCrunchtaskImpl'),
+    CrunchTaskStatic = require('./typeCrunchtaskStatics'),
+    CrunchTask = require('./typeCrunchtask');
 
-  var root = typeof window === 'object' && window ? window : (((typeof process !== 'undefined') && (typeof module !== 'undefined' && module.exports)) ? module.exports : {}),
-    __slice = [].slice,
-    __hasOwnProperty = {}.hasOwnProperty;
+  //noinspection JSUnusedAssignment,SillyAssignmentJS
+  CrunchTaskImpl = CrunchTaskImpl;
 
-  var type = require('./type'),
-    mirror = require('./mirror'),
-    arrayToObject = require('./arrayToObject'),
-    extend = require('./extend'),
-    partial = require('./partial'),
-    bind = require('./bind'),
-    serveEvents = require('./events'),
-    configs = require('./config'),
-    error = require('./error'),
-    together = require('./together'),
-    defer = require('./defer'),
-    safe = require('./safe'),
-    globals = require('./globals'),
-    Range = require('./typeRange');
+  //noinspection JSUnusedAssignment,SillyAssignmentJS
+  CrunchTaskStatic = CrunchTaskStatic;
 
-  var Promise = require('promise-polyfill');
 
-  if (Promise === false) {
-    error('Linking', 'Dependency isn\'t met: "promise-polyfill"');
-  }
-
-  var config = configs.config,
-    defaultConfig = configs.defaultConfig;
+  var root = typeof window === 'object' && window ? window : (((typeof process !== 'undefined') && (typeof module !== 'undefined' && module.exports)) ? module.exports : {});
 
   root.CrunchTask = CrunchTask;
 
-
-  extend(CrunchTask, {
-    /**
-     * @deprecated use range
-     * @type {staticFor}
-     */
-    'for': staticFor,
-    range: staticFor,
-    rangeCheck: normalizeRanges,
-
-    /**
-     * @deprecated use range
-     * @type {Range}
-     */
-    rangeNextAndCheck: function(range, checkOnly) {
-      return range.canAdvance(checkOnly);
-    },
-
-    forEach: staticForEach,
-    reduce: staticReduce,
-
-    /**
-     *
-     * @param {{boolean}|{ timeLimit:Number, timeoutAmount:Number, debug:boolean }} obj
-     */
-    config: function _config(obj) {
-      if (!type.isObject(obj)) {
-        return _config(defaultConfig);
-      }
-      var result = {};
-      for (var prop in obj) {
-        //noinspection JSUnfilteredForInLoop
-        if (__hasOwnProperty.call(obj, prop) && __hasOwnProperty.call(config, prop)) {
-          //noinspection JSUnfilteredForInLoop
-          config[prop] = obj[prop];
-          //noinspection JSUnfilteredForInLoop
-          result[prop] = obj[prop];
-        }
-      }
-      return result;
-    }
-  });
-
   CrunchTask.config(false);
 
-  var uid = 0;
+})();
 
-  /**
-   * Generates new id.
-   * @returns {number}
-   */
-  function nextUid() {
-    return ++uid;
+}).call(this,require('_process'))
+},{"./typeCrunchtask":34,"./typeCrunchtaskImpl":35,"./typeCrunchtaskStatics":36,"_process":38}],11:[function(require,module,exports){
+/**
+ * Created by ANDREW on 6/4/2015.
+ */
+'use strict';
+
+var type = require('./type'),
+  globals = require('./globals'),
+  CrunchTask = require('./typeCrunchtask');
+
+function getExecutableFor(task, ctx) {
+  if (type.isFunction(task)) {
+    return function (args) {
+      return task.apply(ctx || this, args);
+    };
+  } else if (task instanceof CrunchTask) {
+    return function (args) {
+      globals.staticParentTask = ctx;
+      return task.run.apply(task, args);
+    };
+  } else {
+    return function (k) {
+      return k;
+    };
   }
+}
 
-  var EVENT_NAMES = mirror({
-      run     : null,
-      done    : null,
-      fail    : null,
-      abort   : null,
-      error   : null,
-      progress: null,
-      idle    : null
-    }, 'event.'),
-    STATE_NAMES = mirror({
-      init    : null,
-      error   : null,
-      running : null,
-      paused  : null,
-      resolved: null,
-      rejected: null,
-      aborted : null
-    }, 'state.'),
-    SETTLED_STATES = arrayToObject([
-      STATE_NAMES.error,
-      STATE_NAMES.resolved,
-      STATE_NAMES.rejected,
-      STATE_NAMES.aborted
-    ], true),
-    NEED_REPEAT_STATES = arrayToObject([
-      STATE_NAMES.running,
-      STATE_NAMES.paused
-    ], true),
-    VERBOSE_STATES = arrayToObject([
-      STATE_NAMES.resolved, STATE_NAMES.rejected,
-      STATE_NAMES.error, STATE_NAMES.aborted
-    ], [
-      'success', 'failure',
-      'error', 'aborted'
-    ]);
+module.exports  = getExecutableFor;
+},{"./globals":27,"./type":33,"./typeCrunchtask":34}],12:[function(require,module,exports){
+/**
+ * Created by ANDREW on 6/4/2015.
+ */
+'use strict';
 
-  /**
-   *
-   * @param descriptionFn
-   * @param taskEvents
-   * @returns {Promise}
-   */
-  function protoRun(descriptionFn, taskEvents) {
-    var thisTask = this;
-    var parentTask = globals.staticParentTask;
-    globals.staticParentTask = null;
+var type = require('./type'),
+  CrunchTask = require('./typeCrunchtask');
 
-    var instanceApi = {},
-      runCtx = {
-        task            : thisTask,
-        id              : 'T_' + thisTask.id + ':' + nextUid(),
-        conditionsToMeet: 1,
-        state           : STATE_NAMES.init,
-        runBlock        : 0,
-        runArgs         : __slice.call(arguments, 2),
-        descriptionFn   : descriptionFn,
-        parentTask      : parentTask
-      },
-      encapsulation = null,
-      promiseFn = function (_resolve, _reject) {
+/**
+ *
+ * @param val
+ * @returns {boolean}
+ */
+function isExecutable(val) {
+  return type.isFunction(val) || (val instanceof CrunchTask);
+}
 
-        encapsulation = partial(runCtx, encapsulateRunInstance,
-          instanceApi, taskEvents, {
-            resolve: _resolve,
-            reject : _reject
-          }
-        );
+module.exports  = isExecutable;
+},{"./type":33,"./typeCrunchtask":34}],13:[function(require,module,exports){
+/**
+ * Created by ANDREW on 6/4/2015.
+ */
+'use strict';
 
-        defer.call(runCtx, 0, proceedDescriptionFn, [instanceApi]);
-      };
+var __slice = [].slice;
 
-    return overloadPromise(new Promise(promiseFn), instanceApi, encapsulation);
+var type = require('./type'),
+  globals = require('./globals'),
+  defer = require('./defer'),
+  partial = require('./partial'),
+  safe = require('./safe'),
+  config = require('./config').config,
+  STATE_NAMES = require('./constStateNames'),
+  NEED_REPEAT_STATES = require('./constNeedRepeatStates'),
+  VERBOSE_STATES = require('./constVerboseStates');
 
+
+function proceedBodyFn(instanceApi, isFirstTime) {
+  if (config.trace) {
+
+    console.log('inside proceedBodyFn', this.id, new Date() - 0); // jshint ignore:line
+    console.log('isFirstTime', isFirstTime);
+    console.log('this.timeoutAmount', this.timeoutAmount); // jshint ignore:line
   }
+  defer.call(this, isFirstTime ? 0 : this.timeoutAmount, function (instanceApi) { // jshint ignore:line
 
-  function overloadPromise(promise, instanceApi, sealEncapsulationFn) {
-
-    sealEncapsulationFn(promise);
-
-    return extend(promise, {
-      onError: partial(promise, instanceApi.runEventsOn, EVENT_NAMES.error),
-
-      abort : partial(promise, instanceApi.abort),
-      pause : partial(promise, instanceApi.pause),
-      resume: partial(promise, instanceApi.resume),
-
-      done  : partial(promise, instanceApi.runEventsOn, EVENT_NAMES.done),
-      fail  : partial(promise, instanceApi.runEventsOn, EVENT_NAMES.fail),
-      always: partial(promise, instanceApi.runEventsOn, [EVENT_NAMES.done, EVENT_NAMES.fail, EVENT_NAMES.error].join()),
-
-      progress  : partial(promise, instanceApi.runEventsOn, EVENT_NAMES.progress)
-    });
-  }
-
-  function encapsulateRunInstance(instanceApi, taskEvents, resolveReject, promise) {
-
-    var ctx = this,
-      thisTask = ctx.task,
-      parentTask = ctx.parentTask,
-      resolveSafe = safe(resolveReject.resolve),
-      rejectSafe = safe(resolveReject.reject),
-      runEvents = serveEvents(promise),
-      triggerBoth = together(runEvents.trigger, taskEvents.trigger);
-
-    if (parentTask) {
-      parentTask.childTask = thisTask;
+    if (config.trace) {
+      console.log('inside proceedBodyFn:defer', this.id, new Date() - 0);
     }
 
-    return extend(instanceApi, {
+    var task = this.task,
+      needRepeat = this.needRepeat,
+      timeLimit = type.isNumber(needRepeat) ? needRepeat : 0;
 
-      /**
-       *
-       * @param _initFn
-       * @returns {*}
-       */
-      setupInit: function (_initFn) {
-        if (config.trace) {
-          console.log('setupInit', new Date() - 0);
+    var timerBatchStart,
+      timerStart,
+      miniRunCount = 0,
+      timerElapsed = 0;
+
+    var canExecuteNextLoop = (this.state === STATE_NAMES.running) && !task.isPaused && !task.isAborted,
+      canRepeatThisLoop,
+      canQueueNextBatch;
+
+    if (canExecuteNextLoop) {
+      timerBatchStart = new Date();
+      do {
+
+        try {
+          timerStart = new Date();
+          this.bodyFn(instanceApi.resolve, instanceApi.reject, instanceApi.sendNotify, {
+            batchStarted: timerBatchStart,
+            batchIndex  : miniRunCount,
+            batchElapsed: timerElapsed,
+            runBlock    : this.runBlock
+          });
+
+        } catch (ex) {
+          if (config.debug) {
+            console.log(ex + ', stack: ' + ex.stack);
+          }
+          instanceApi.signalError('body', ex);
         }
 
-        if (SETTLED_STATES[ctx.state]) {
-          return;
-        }
+        timerElapsed += (new Date() - timerStart);
+        miniRunCount++;
 
-        if (!type.isUndefined(_initFn) && !type.isFunction(_initFn)) {
-          return signalError('CrunchTask.description.initSetup', 'Init setup expects an optional function.');
-        }
+        canRepeatThisLoop = needRepeat && (timeLimit !== 0) &&
+          (timerElapsed < timeLimit) && (this.state === STATE_NAMES.running);
 
-        ctx.initFn = safe(thisTask, _initFn);
-      },
+      } while (canRepeatThisLoop);
 
-      /**
-       *
-       * @param _bodyFn
-       * @param _needRepeat
-       * @param _timeout
-       * @returns {*}
-       */
-      setupBody: function (_bodyFn, _needRepeat, _timeout) {
-        if (config.trace) {
-          console.log('setupBody', new Date() - 0);
-        }
-        if (SETTLED_STATES[ctx.state]) {
-          return;
-        }
+    } else if (task.isAborted || this.state === STATE_NAMES.aborted) {
+      instanceApi.reject('aborted');
+    }
 
-        if (!type.isFunction(_bodyFn)) {
-          return signalError('CrunchTask.description.bodySetup', 'Body setup expects a function as a first optional arg.');
-        }
+    canQueueNextBatch = needRepeat && NEED_REPEAT_STATES[this.state] && !task.isAborted;
 
-        if (!type.isUndefined(_needRepeat) && !type.isBoolean(_needRepeat) && !type.isNumber(_needRepeat)) {
-          return signalError('CrunchTask.description.bodySetup', 'Body setup expects a number or false as a 2nd optional arg.');
-        }
+    if (canQueueNextBatch) {
+      this.runBlock++;
+      if (config.trace) {
+        console.log('rescheduling proceedBodyFn', this.id, new Date() - 0);
+      }
+      return proceedBodyFn.call(this, instanceApi);
+    }
 
-        if (!type.isUndefined(_timeout) && !type.isNumber(_timeout)) {
-          return signalError('CrunchTask.description.bodySetup', 'Body setup expects a number as a 3rd optional arg.');
-        }
+    if (needRepeat === false) {
+      instanceApi.resolve();
+    }
 
-        ctx.bodyFn = safe(thisTask, _bodyFn);
-        ctx.conditionsToMeet--;
+    if (this.finallyFn && !this.finallyFn.call(this, VERBOSE_STATES[this.state])) {
+      instanceApi.signalError('CrunchTask.description.fin', this.status);
+    }
 
-        ctx.needRepeat = _needRepeat;
-        ctx.timeoutAmount = _timeout;
-      },
+  }, [instanceApi]);
+}
 
-      /**
-       *
-       * @param _finallyFn
-       * @returns {*}
-       */
-      setupFin: function (_finallyFn) {
-        if (config.trace) {
-          console.log('setupFin', new Date() - 0);
-        }
-        if (SETTLED_STATES[ctx.state]) {
-          return;
-        }
-        if (!type.isUndefined(_finallyFn) && !type.isFunction(_finallyFn)) {
-          return signalError('CrunchTask.description.finSetup', 'Fin setup expects a function as a first optional arg.');
-        }
-        ctx.finallyFn = safe(thisTask, _finallyFn);
-      },
 
-      signalError: signalError,
 
-      runEventsOn: runEvents.on,
-      //onError: partial(runEvents.on, EVENT_NAMES.error),
-      //onDone: partial(runEvents.on, EVENT_NAMES.done),
-      //onFail: partial(runEvents.on, EVENT_NAMES.fail),
-      //onAlways: partial(runEvents.on, [EVENT_NAMES.done,EVENT_NAMES.fail].join()),
+module.exports = proceedBodyFn;
+},{"./config":4,"./constNeedRepeatStates":6,"./constStateNames":8,"./constVerboseStates":9,"./defer":23,"./globals":27,"./partial":30,"./safe":31,"./type":33}],14:[function(require,module,exports){
+/**
+ * Created by ANDREW on 6/4/2015.
+ */
+'use strict';
 
-      /**
-       *
-       */
-      goRunning: function () {
-        thisTask.runCount++;
-        ctx.state = STATE_NAMES.running;
-        taskEvents.trigger(EVENT_NAMES.run, ctx.id); // no need to call runInst
-      },
-      /**
-       *
-       */
-      resolve  : function () {
-        if (SETTLED_STATES[ctx.state]) {
-          return;
-        }
-        var args0 = __slice.call(arguments, 0);
-        ctx.state = STATE_NAMES.resolved;
-        ctx.value = args0;
+var __slice = [].slice;
 
-        decreaseRunning(thisTask);
+var globals = require('./globals'),
+  defer = require('./defer'),
+  partial = require('./partial'),
+  safe = require('./safe'),
+  config = require('./config').config,
+  proceedBodyFn = require('./ctFnProceedBody'),
 
-        signalGeneric(args0, EVENT_NAMES.done, resolveSafe);
-      },
-      /**
-       *
-       */
-      reject   : function () {
+  STATE_NAMES = require('./constStateNames'),
+  SETTLED_STATES = require('./constSettledStates');
 
-        if (SETTLED_STATES[ctx.state]) {
-          return;
-        }
-        var args0 = __slice.call(arguments, 0);
-        ctx.state = STATE_NAMES.rejected;
-        ctx.value = args0;
 
-        decreaseRunning(thisTask);
+function proceedDescriptionFn(instanceApi) {
 
-        signalGeneric(args0, EVENT_NAMES.fail, rejectSafe);
-      },
-      abort    : function () {
-        if (SETTLED_STATES[ctx.state]) {
-          return;
-        }
-        ctx.state = STATE_NAMES.aborted;
-        return this;
-      },
+  var ctx = this, // jshint ignore:line
+    thisTask = ctx.task,
+    descriptionFn = ctx.descriptionFn;
 
-      pause: function () {
-        if (SETTLED_STATES[ctx.state]) {
-          return;
-        }
-        ctx.state = STATE_NAMES.paused;
-        return this;
-      },
+  if (!descriptionFn) {
+    return instanceApi.signalError('CrunchTask.description.empty', 'Description function is empty.');
+  }
 
-      resume: function () {
-        if (SETTLED_STATES[ctx.state]) {
-          return;
-        }
-        ctx.state = STATE_NAMES.running;
-        return this;
-      },
+  if (config.trace) {
+    console.log('before descriptionFn run', new Date() - 0);
+  }
+  if (safe(thisTask, descriptionFn)(
+      instanceApi.setupInit,
+      instanceApi.setupBody,
+      instanceApi.setupFin) &&
+    (!SETTLED_STATES[ctx.state]) &&
+    (ctx.conditionsToMeet === 0)) {
 
-      sendNotify: partial(triggerBoth, EVENT_NAMES.progress)
+    if (config.trace) {
+      console.log('after descriptionFn run', new Date() - 0);
+    }
+
+    var _needRepeat = ctx.needRepeat;
+    _needRepeat = ((_needRepeat === false) ? _needRepeat
+      : ((_needRepeat === 0) ? _needRepeat : _needRepeat || config.timeLimit));
+
+    ctx.needRepeat = (_needRepeat === 0) ? true : _needRepeat;
+    ctx.timeoutAmount = ctx.timeoutAmount || config.timeoutAmount;
+
+    if (config.trace) {
+      console.log('collected `needRepeat`:', ctx.needRepeat);
+      console.log('collected `timeoutAmount`:', ctx.timeoutAmount);
+    }
+
+    instanceApi.goRunning();
+
+    if (config.trace) {
+      console.log('before defer', new Date() - 0);
+    }
+
+    // schedule init, body, fin, etc.
+    defer.call(ctx, 0, function () {
+
+      if (config.trace) {
+        console.log('inside defer', new Date() - 0);
+      }
+
+      if (this.initFn && !this.initFn.apply(this, this.runArgs)) {
+        instanceApi.signalError('CrunchTask.description.init');
+      }
+      if (config.trace) {
+        console.log('before  proceedBodyFn', new Date() - 0);
+      }
+      proceedBodyFn.call(this, instanceApi, true);
 
     });
 
-    function signalError() {
-      if (SETTLED_STATES[ctx.state]) {
-        return;
-      }
-
-      var args0 = __slice.call(arguments, 0);
-      ctx.state = STATE_NAMES.error;
-      ctx.value = args0;
-
-      signalGeneric(args0, EVENT_NAMES.error, rejectSafe);
-    }
-
-    function signalGeneric(args0, eventName, actionFn) {
-
-      triggerBoth.apply(this, [eventName].concat(args0));
-
-      if (actionFn) {
-        defer.call(thisTask, 0, actionFn, [args0]);
-      }
-    }
-
-    function signalTwoParties(taskC, taskP) {
-      defer(1, function () {
-        if ((taskC.runCount + taskP.runCount) > 0) {
-          return;
-        }
-        globals.staticSecurityLock = true;
-        taskC._signalIdle();
-        globals.staticSecurityLock = true;
-        taskP._signalIdle();
-
-        delete ctx.parentTask;
-        delete taskP.childTask;
-
-      });
-    }
-
-    function decreaseRunning(thisTask) {
-      thisTask.runCount = Math.max(0, thisTask.runCount - 1);
-      if (thisTask.runCount) {
-        return;
-      }
-
-      delete thisTask.isAborted;
-      delete thisTask.isPaused;
-
-      if (thisTask.childTask) {
-        signalTwoParties(thisTask.childTask, thisTask);
-      } else if (ctx.parentTask) {
-        signalTwoParties(thisTask, ctx.parentTask);
-      } else {
-        defer(1, function() {
-          if (thisTask.runCount) {
-            return;
-          }
-          globals.staticSecurityLock = true;
-          thisTask._signalIdle();
-        });
-      }
-
-    }
-
+  } else {
+    // bad outcome, reject
+    return instanceApi.signalError('CrunchTask.description.else', '');
   }
+}
 
 
-  function proceedDescriptionFn(instanceApi) {
+module.exports = proceedDescriptionFn;
+},{"./config":4,"./constSettledStates":7,"./constStateNames":8,"./ctFnProceedBody":13,"./defer":23,"./globals":27,"./partial":30,"./safe":31}],15:[function(require,module,exports){
+/**
+ * Created by ANDREW on 6/4/2015.
+ */
+'use strict';
 
-    var ctx = this,
-      thisTask = ctx.task,
-      descriptionFn = ctx.descriptionFn;
+var __slice = [].slice;
 
-    if (!descriptionFn) {
-      return instanceApi.signalError('CrunchTask.description.empty', 'Description function is empty.');
-    }
+var CrunchTask = require('./typeCrunchtask');
 
-    if (config.trace) {
-      console.log('before descriptionFn run', new Date() - 0);
-    }
-    if (safe(thisTask, descriptionFn)(
-        instanceApi.setupInit,
-        instanceApi.setupBody,
-        instanceApi.setupFin) &&
-      (!SETTLED_STATES[ctx.state]) &&
-      (ctx.conditionsToMeet === 0)) {
+function resolvedTask() {
+  return new CrunchTask(function (init, body) {
+    body(function (resolve) {
+      resolve();
+    });
+  });
+}
 
-      if (config.trace) {
-        console.log('after descriptionFn run', new Date() - 0);
-      }
+module.exports = resolvedTask;
+},{"./typeCrunchtask":34}],16:[function(require,module,exports){
+/**
+ * Created by ANDREW on 6/4/2015.
+ */
+'use strict';
 
-      var _needRepeat = ctx.needRepeat;
-      _needRepeat = ((_needRepeat === false) ? _needRepeat
-        : ((_needRepeat === 0) ? _needRepeat : _needRepeat || config.timeLimit));
+var __slice = [].slice;
 
-      ctx.needRepeat = (_needRepeat === 0) ? true : _needRepeat;
-      ctx.timeoutAmount = ctx.timeoutAmount || config.timeoutAmount;
+var getExecutableFor = require('./ctFnGetExecutableFor'),
+  CrunchTask = require('./typeCrunchtask');
 
-      if (config.trace) {
-        console.log('collected `needRepeat`:', ctx.needRepeat);
-        console.log('collected `timeoutAmount`:', ctx.timeoutAmount);
-      }
-
-      instanceApi.goRunning();
-
-      if (config.trace) {
-        console.log('before defer', new Date() - 0);
-      }
-
-      // schedule init, body, fin, etc.
-      defer.call(ctx, 0, function () {
-
-        if (config.trace) {
-          console.log('inside defer', new Date() - 0);
-        }
-
-        if (this.initFn && !this.initFn.apply(this, this.runArgs)) {
-          instanceApi.signalError('CrunchTask.description.init');
-        }
-        if (config.trace) {
-          console.log('before  proceedBodyFn', new Date() - 0);
-        }
-        proceedBodyFn.call(this, instanceApi, true);
-
-      });
-
-    } else {
-      // bad outcome, reject
-      return instanceApi.signalError('CrunchTask.description.else', '');
-    }
-  }
-
-  function proceedBodyFn(instanceApi, isFirstTime) {
-    if (config.trace) {
-      console.log('inside proceedBodyFn', this.id, new Date() - 0);
-      console.log('isFirstTime', isFirstTime);
-      console.log('this.timeoutAmount', this.timeoutAmount);
-    }
-    defer.call(this, isFirstTime ? 0 : this.timeoutAmount, function (instanceApi) {
-
-      if (config.trace) {
-        console.log('inside proceedBodyFn:defer', this.id, new Date() - 0);
-      }
-
-      var task = this.task,
-        needRepeat = this.needRepeat,
-        timeLimit = type.isNumber(needRepeat) ? needRepeat : 0;
-
-      var timerBatchStart,
-        timerStart,
-        miniRunCount = 0,
-        timerElapsed = 0;
-
-      var canExecuteNextLoop = (this.state === STATE_NAMES.running) && !task.isPaused && !task.isAborted,
-        canRepeatThisLoop,
-        canQueueNextBatch;
-
-      if (canExecuteNextLoop) {
-        timerBatchStart = new Date();
-        do {
-
-          try {
-            timerStart = new Date();
-            this.bodyFn(instanceApi.resolve, instanceApi.reject, instanceApi.sendNotify, {
-              batchStarted: timerBatchStart,
-              batchIndex  : miniRunCount,
-              batchElapsed: timerElapsed,
-              runBlock    : this.runBlock
-            });
-
-          } catch (ex) {
-            if (config.debug) {
-              console.log(ex + ', stack: ' + ex.stack);
-            }
-            instanceApi.signalError('body', ex);
-          }
-
-          timerElapsed += (new Date() - timerStart);
-          miniRunCount++;
-
-          canRepeatThisLoop = needRepeat && (timeLimit !== 0) &&
-            (timerElapsed < timeLimit) && (this.state === STATE_NAMES.running);
-
-        } while (canRepeatThisLoop);
-
-      } else if (task.isAborted || this.state === STATE_NAMES.aborted) {
-        instanceApi.reject('aborted');
-      }
-
-      canQueueNextBatch = needRepeat && NEED_REPEAT_STATES[this.state] && !task.isAborted;
-
-      if (canQueueNextBatch) {
-        this.runBlock++;
-        if (config.trace) {
-          console.log('rescheduling proceedBodyFn', this.id, new Date() - 0);
-        }
-        return proceedBodyFn.call(this, instanceApi);
-      }
-
-      if (needRepeat === false) {
-        instanceApi.resolve();
-      }
-
-      if (this.finallyFn && !this.finallyFn.call(this, VERBOSE_STATES[this.state])) {
-        instanceApi.signalError('CrunchTask.description.fin', this.status);
-      }
-
-    }, [instanceApi]);
-  }
-
-  function protoAbort() {
-    this.isAborted = true;
+var protoMethods = {
+  isIdle   : function isIdle() {
+    return this.runCount === 0;
+  },
+  pause: function protoPause() {
+    this.isPaused = true; // jshint ignore:line
     return this;
-  }
-
-  function protoPause() {
-    this.isPaused = true;
+  },
+  resume: function protoResume() {
+    delete this.isPaused; // jshint ignore:line
     return this;
-  }
-
-  function protoResume() {
-    delete this.isPaused;
+  },
+  abort: function protoAbort() {
+    this.isAborted = true; // jshint ignore:line
     return this;
-  }
-
-  function protoThen(descriptionFn /*, tasks..*/){
+  },
+  then: function protoThen(descriptionFn /*, tasks..*/){
     var args0 = __slice.call(arguments, 1), _newTask;
     try {
       return (_newTask = new CrunchTask(descriptionFn));
@@ -667,237 +531,547 @@ module.exports = {
       }
     }
   }
+};
 
+module.exports = protoMethods;
+},{"./ctFnGetExecutableFor":11,"./typeCrunchtask":34}],17:[function(require,module,exports){
+/**
+ * Created by ANDREW on 6/4/2015.
+ */
+'use strict';
 
-  /**
-   *
-   * @callback descriptionFunc
-   * @param {function} initSetup
-   * @param {function} bodySetup
-   * @param {function} finSetup
-   */
-  /**
-   *
-   * @param {descriptionFunc} descriptionFn
-   * @returns {CrunchTask}
-   * @constructor
-   */
-  function CrunchTask(descriptionFn) {
-    // always dealing with the `new` keyword instantiation
-    if (!(this instanceof CrunchTask)) {
-      return new CrunchTask(descriptionFn);
-    }
+var __slice = [].slice;
 
-    return prepareBlankTask(this, serveEvents(this), descriptionFn);
+var globals = require('./globals'),
+  defer = require('./defer'),
+  extend = require('./extend'),
+  partial = require('./partial'),
+  nextUid = require('./nextUid'),
+  encapsulateRunInstance = require('./ctRunEncapsulateInst'),
+  proceedDescriptionFn = require('./ctFnProceedDescription'),
+  EVENT_NAMES = require('./constEventNames'),
+  STATE_NAMES = require('./constStateNames'),
+  Promise = require('promise-polyfill'); // jshint ignore:line
+
+/**
+ *
+ * @param descriptionFn
+ * @param taskEvents
+ * @returns {Promise}
+ */
+function protoRun(descriptionFn, taskEvents) {
+  var thisTask = this; // jshint ignore:line
+  var parentTask = globals.staticParentTask;
+  globals.staticParentTask = null;
+
+  var instanceApi = {},
+    runCtx = {
+      task            : thisTask,
+      id              : 'T_' + thisTask.id + ':' + nextUid(),
+      conditionsToMeet: 1,
+      state           : STATE_NAMES.init,
+      runBlock        : 0,
+      runArgs         : __slice.call(arguments, 2),
+      descriptionFn   : descriptionFn,
+      parentTask      : parentTask
+    },
+    encapsulation = null,
+    promiseFn = function (_resolve, _reject) {
+
+      encapsulation = partial(runCtx, encapsulateRunInstance,
+        instanceApi, taskEvents, {
+          resolve: _resolve,
+          reject : _reject
+        }
+      );
+
+      defer.call(runCtx, 0, proceedDescriptionFn, [instanceApi]);
+    };
+
+  return overloadPromise(
+    new Promise(promiseFn),
+    instanceApi,
+    encapsulation
+  );
+
+}
+
+function overloadPromise(promise, instanceApi, sealEncapsulationFn) {
+
+  sealEncapsulationFn(promise);
+
+  return extend(promise, {
+    onError: partial(promise, instanceApi.runEventsOn, EVENT_NAMES.error),
+
+    abort : partial(promise, instanceApi.abort),
+    pause : partial(promise, instanceApi.pause),
+    resume: partial(promise, instanceApi.resume),
+
+    done  : partial(promise, instanceApi.runEventsOn, EVENT_NAMES.done),
+    fail  : partial(promise, instanceApi.runEventsOn, EVENT_NAMES.fail),
+    always: partial(promise, instanceApi.runEventsOn, [EVENT_NAMES.done, EVENT_NAMES.fail, EVENT_NAMES.error].join()),
+
+    progress  : partial(promise, instanceApi.runEventsOn, EVENT_NAMES.progress)
+  });
+}
+
+module.exports = protoRun;
+},{"./constEventNames":5,"./constStateNames":8,"./ctFnProceedDescription":14,"./ctRunEncapsulateInst":18,"./defer":23,"./extend":26,"./globals":27,"./nextUid":29,"./partial":30,"promise-polyfill":39}],18:[function(require,module,exports){
+/**
+ * Created by ANDREW on 6/4/2015.
+ */
+'use strict';
+
+var __slice = [].slice;
+
+var type = require('./type'),
+  extend = require('./extend'),
+  partial = require('./partial'),
+  serveEvents = require('./events'),
+  defer = require('./defer'),
+  safe = require('./safe'),
+  together = require('./together'),
+  globals = require('./globals'),
+  config = require('./config').config,
+  EVENT_NAMES = require('./constEventNames'),
+  STATE_NAMES = require('./constStateNames'),
+  SETTLED_STATES = require('./constSettledStates'),
+  Promise = require('promise-polyfill');
+
+function encapsulateRunInstance(instanceApi, taskEvents, resolveReject, promise) {
+
+  var ctx = this, // jshint ignore:line
+    thisTask = ctx.task,
+    parentTask = ctx.parentTask,
+    resolveSafe = safe(resolveReject.resolve),
+    rejectSafe = safe(resolveReject.reject),
+    runEvents = serveEvents(promise),
+    triggerBoth = together(runEvents.trigger, taskEvents.trigger);
+
+  if (parentTask) {
+    parentTask.childTask = thisTask;
   }
 
-  function prepareBlankTask(task, events, descriptionFn) {
-    return extend(task, {
-      id       : nextUid(),
-      timestamp: new Date() - 0,
-      runCount : 0,
-      isIdle   : function isIdle() {
-        return task.runCount === 0;
-      },
+  return extend(instanceApi, {
 
-      pause : bind(task, protoPause),
-      resume: bind(task, protoResume),
-      abort : bind(task, protoAbort),
+    /**
+     *
+     * @param _initFn
+     * @returns {*}
+     */
+    setupInit: function (_initFn) {
+      if (config.trace) {
+        console.log('setupInit', new Date() - 0);
+      }
 
-      run : partial(task, protoRun, descriptionFn, events),
-      then: partial(task, protoThen),
+      if (SETTLED_STATES[ctx.state]) {
+        return;
+      }
 
-      onRun   : partial(events.on, EVENT_NAMES.run),
-      onIdle  : partial(events.on, EVENT_NAMES.idle),
-      onError : partial(events.on, EVENT_NAMES.error),
-      done    : partial(events.on, EVENT_NAMES.done),
-      fail    : partial(events.on, EVENT_NAMES.fail),
-      always  : partial(events.on, [EVENT_NAMES.done, EVENT_NAMES.fail, EVENT_NAMES.error].join()),
-      progress: partial(events.on, EVENT_NAMES.progress),
-      _signalIdle: function(){
-        if (!globals.staticSecurityLock) { return; }
-        globals.staticSecurityLock = false;
-        events.trigger(EVENT_NAMES.idle);
+      if (!type.isUndefined(_initFn) && !type.isFunction(_initFn)) {
+        return signalError('CrunchTask.description.initSetup', 'Init setup expects an optional function.');
+      }
+
+      ctx.initFn = safe(thisTask, _initFn);
+    },
+
+    /**
+     *
+     * @param _bodyFn
+     * @param _needRepeat
+     * @param _timeout
+     * @returns {*}
+     */
+    setupBody: function (_bodyFn, _needRepeat, _timeout) {
+      if (config.trace) {
+        console.log('setupBody', new Date() - 0);
+      }
+      if (SETTLED_STATES[ctx.state]) {
+        return;
+      }
+
+      if (!type.isFunction(_bodyFn)) {
+        return signalError('CrunchTask.description.bodySetup', 'Body setup expects a function as a first optional arg.');
+      }
+
+      if (!type.isUndefined(_needRepeat) && !type.isBoolean(_needRepeat) && !type.isNumber(_needRepeat)) {
+        return signalError('CrunchTask.description.bodySetup', 'Body setup expects a number or false as a 2nd optional arg.');
+      }
+
+      if (!type.isUndefined(_timeout) && !type.isNumber(_timeout)) {
+        return signalError('CrunchTask.description.bodySetup', 'Body setup expects a number as a 3rd optional arg.');
+      }
+
+      ctx.bodyFn = safe(thisTask, _bodyFn);
+      ctx.conditionsToMeet--;
+
+      ctx.needRepeat = _needRepeat;
+      ctx.timeoutAmount = _timeout;
+    },
+
+    /**
+     *
+     * @param _finallyFn
+     * @returns {*}
+     */
+    setupFin: function (_finallyFn) {
+      if (config.trace) {
+        console.log('setupFin', new Date() - 0);
+      }
+      if (SETTLED_STATES[ctx.state]) {
+        return;
+      }
+      if (!type.isUndefined(_finallyFn) && !type.isFunction(_finallyFn)) {
+        return signalError('CrunchTask.description.finSetup', 'Fin setup expects a function as a first optional arg.');
+      }
+      ctx.finallyFn = safe(thisTask, _finallyFn);
+    },
+
+    signalError: signalError,
+
+    runEventsOn: runEvents.on,
+    //onError: partial(runEvents.on, EVENT_NAMES.error),
+    //onDone: partial(runEvents.on, EVENT_NAMES.done),
+    //onFail: partial(runEvents.on, EVENT_NAMES.fail),
+    //onAlways: partial(runEvents.on, [EVENT_NAMES.done,EVENT_NAMES.fail].join()),
+
+    /**
+     *
+     */
+    goRunning: function () {
+      thisTask.runCount++;
+      ctx.state = STATE_NAMES.running;
+      taskEvents.trigger(EVENT_NAMES.run, ctx.id); // no need to call runInst
+    },
+    /**
+     *
+     */
+    resolve  : function () {
+      if (SETTLED_STATES[ctx.state]) {
+        return;
+      }
+      var args0 = __slice.call(arguments, 0);
+      ctx.state = STATE_NAMES.resolved;
+      ctx.value = args0;
+
+      decreaseRunning(thisTask);
+
+      signalGeneric(args0, EVENT_NAMES.done, resolveSafe);
+    },
+    /**
+     *
+     */
+    reject   : function () {
+
+      if (SETTLED_STATES[ctx.state]) {
+        return;
+      }
+      var args0 = __slice.call(arguments, 0);
+      ctx.state = STATE_NAMES.rejected;
+      ctx.value = args0;
+
+      decreaseRunning(thisTask);
+
+      signalGeneric(args0, EVENT_NAMES.fail, rejectSafe);
+    },
+    abort    : function () {
+      if (SETTLED_STATES[ctx.state]) {
+        return;
+      }
+      ctx.state = STATE_NAMES.aborted;
+      return this;
+    },
+
+    pause: function () {
+      if (SETTLED_STATES[ctx.state]) {
+        return;
+      }
+      ctx.state = STATE_NAMES.paused;
+      return this;
+    },
+
+    resume: function () {
+      if (SETTLED_STATES[ctx.state]) {
+        return;
+      }
+      ctx.state = STATE_NAMES.running;
+      return this;
+    },
+
+    sendNotify: partial(triggerBoth, EVENT_NAMES.progress)
+
+  });
+
+  function signalError() {
+    if (SETTLED_STATES[ctx.state]) {
+      return;
+    }
+
+    var args0 = __slice.call(arguments, 0);
+    ctx.state = STATE_NAMES.error;
+    ctx.value = args0;
+
+    signalGeneric(args0, EVENT_NAMES.error, rejectSafe);
+  }
+
+  function signalGeneric(args0, eventName, actionFn) {
+
+    triggerBoth.apply(this, [eventName].concat(args0)); // jshint ignore:line
+
+    if (actionFn) {
+      defer.call(thisTask, 0, actionFn, [args0]);
+    }
+  }
+
+  function signalTwoParties(taskC, taskP) {
+    defer(1, function () {
+      if ((taskC.runCount + taskP.runCount) > 0) {
+        return;
+      }
+      globals.staticSecurityLock = true;
+      taskC._signalIdle();
+      globals.staticSecurityLock = true;
+      taskP._signalIdle();
+
+      delete ctx.parentTask;
+      delete taskP.childTask;
+
+    });
+  }
+
+  function decreaseRunning(thisTask) {
+    thisTask.runCount = Math.max(0, thisTask.runCount - 1);
+    if (thisTask.runCount) {
+      return;
+    }
+
+    delete thisTask.isAborted;
+    delete thisTask.isPaused;
+
+    if (thisTask.childTask) {
+      signalTwoParties(thisTask.childTask, thisTask);
+    } else if (ctx.parentTask) {
+      signalTwoParties(thisTask, ctx.parentTask);
+    } else {
+      defer(1, function() {
+        if (thisTask.runCount) {
+          return;
+        }
+        globals.staticSecurityLock = true;
+        thisTask._signalIdle();
+      });
+    }
+
+  }
+
+}
+module.exports = encapsulateRunInstance;
+},{"./config":4,"./constEventNames":5,"./constSettledStates":7,"./constStateNames":8,"./defer":23,"./events":25,"./extend":26,"./globals":27,"./partial":30,"./safe":31,"./together":32,"./type":33,"promise-polyfill":39}],19:[function(require,module,exports){
+/**
+ * Created by ANDREW on 6/4/2015.
+ */
+'use strict';
+
+var __slice = [].slice;
+
+var globals = require('./globals'),
+  defer = require('./defer'),
+  partial = require('./partial'),
+  isExecutable = require('./ctFnIsExecutable'),
+
+  config = require('./config').config,
+  STATE_NAMES = require('./constStateNames'),
+  getExecutableFor = require('./ctFnGetExecutableFor'),
+  resolvedTask = require('./ctFnResolvedTask'),
+
+  CrunchTask = require('./typeCrunchtask'),
+  Range = require('./typeRange');
+
+//noinspection JSCommentMatchesSignature,JSValidateJSDoc
+/**
+ * @param {number} [start]
+ * @param {number} [finish]
+ * @param {number} [increment]
+ * @param {boolean} [inclusive]
+ * @param {function|CrunchTask} fnBody
+ * @param {function|CrunchTask} fnTail
+ * @returns {CrunchTask}
+ */
+function staticFor(/*{start, finish, increment, inclusive, } * n, fnBody, {fnTail}*/) {
+  var argsCount = arguments.length,
+    fnCount = 0;
+
+  while (isExecutable(arguments[argsCount - 1 - fnCount])) {
+    fnCount++;
+  }
+
+  var args = __slice.call(arguments, 0, argsCount - fnCount),
+    fns = __slice.call(arguments, -fnCount),
+    ranges = new Range(args),
+    taskBody = fns[0],
+    taskTail = fns[1] || function () {
+      };
+
+  if (!taskBody) {
+    return resolvedTask();
+  }
+
+  return internalFor(ranges, taskBody, taskTail);
+}
+
+function internalFor(_ranges, taskBody, taskTail) {
+  return new CrunchTask(function (init, body, fin) {
+    var ranges = _ranges, canRunCycle,
+      bodyFn = getExecutableFor(taskBody, this),
+      tailFn = getExecutableFor(taskTail, this);
+
+    init(function () {
+      var args = __slice.call(arguments, 0);
+      if (args.length) {
+        ranges = new Range(args);
+      }
+      canRunCycle = ranges.canAdvance(true);
+    });
+
+    body(function (resolve) {
+      if (canRunCycle) {
+        bodyFn(ranges.valueOf());
+      }
+      if (!canRunCycle || !ranges.canAdvance()) {
+        resolve();
+      }
+    }, config.timeLimit, config.timeoutAmount);
+
+    fin(function () {
+      tailFn(ranges.valueOf());
+    });
+  });
+}
+
+
+module.exports = staticFor;
+},{"./config":4,"./constStateNames":8,"./ctFnGetExecutableFor":11,"./ctFnIsExecutable":12,"./ctFnResolvedTask":15,"./defer":23,"./globals":27,"./partial":30,"./typeCrunchtask":34,"./typeRange":37}],20:[function(require,module,exports){
+/**
+ * Created by ANDREW on 6/4/2015.
+ */
+'use strict';
+
+var __slice = [].slice;
+
+var config = require('./config').config,
+  getExecutableFor = require('./ctFnGetExecutableFor'),
+
+  CrunchTask = require('./typeCrunchtask'),
+  Range = require('./typeRange');
+
+function staticForEach(arr, taskBody, taskTail) {
+
+  return new CrunchTask(function (init, body, fin) {
+    var ranges,
+      ptr,
+      arrInternal = arr,
+      canRunCycle,
+      bodyFn = getExecutableFor(taskBody, this),
+      tailFn = getExecutableFor(taskTail, this);
+
+    init(function (_arr) {
+      if (_arr) {
+        arrInternal = arr;
+      }
+      ranges = new Range([0, arrInternal.length]);
+      canRunCycle = ranges.canAdvance(true);
+    });
+
+    body(function (resolve) {
+      if (canRunCycle) {
+        ptr = ranges.valueOf()[0];
+        bodyFn([arrInternal[ptr], ptr]);
+      }
+      if (!canRunCycle || !ranges.canAdvance()) {
+        resolve();
+      }
+    }, config.timeLimit, config.timeoutAmount);
+
+    fin(function () {
+      tailFn(ranges.valueOf());
+    });
+  });
+}
+
+
+module.exports = staticForEach;
+},{"./config":4,"./ctFnGetExecutableFor":11,"./typeCrunchtask":34,"./typeRange":37}],21:[function(require,module,exports){
+/**
+ * Created by ANDREW on 6/4/2015.
+ */
+'use strict';
+
+var __slice = [].slice;
+
+var Range = require('./typeRange');
+
+function normalizeRanges() {
+  var args = __slice.call(arguments, 0);
+  return new Range(args);
+}
+
+module.exports = normalizeRanges;
+},{"./typeRange":37}],22:[function(require,module,exports){
+/**
+ * Created by ANDREW on 6/4/2015.
+ */
+'use strict';
+
+var type = require('./type'),
+  config = require('./config').config,
+  getExecutableFor = require('./ctFnGetExecutableFor'),
+
+  CrunchTask = require('./typeCrunchtask'),
+  Range = require('./typeRange');
+
+
+function staticReduce(arr, memo, taskBody, taskTail) {
+
+  return new CrunchTask(function (init, body, fin) {
+
+    var ranges,
+      ptr,
+      arrInternal = arr,
+      memoInternal = memo,
+      canRunCycle,
+      bodyFn = getExecutableFor(taskBody, this),
+      tailFn = getExecutableFor(taskTail, this);
+
+    init(function (_arr, _memo) {
+      if (_arr) {
+        arrInternal = arr;
+      }
+      ranges = new Range([0, arrInternal.length]);
+      canRunCycle = ranges.canAdvance(true);
+      if (!type.isUndefined(_memo)) {
+        memoInternal = _memo;
       }
     });
-  }
 
+    body(function (resolve) {
+      if (canRunCycle) {
+        ptr = ranges.valueOf()[0];
+        memoInternal = bodyFn([memoInternal, arrInternal[ptr], ptr]);
+      }
+      if (!canRunCycle || !ranges.canAdvance()) {
+        resolve(memoInternal);
+      }
+    }, config.timeLimit, config.timeoutAmount);
 
-  /**
-   *
-   * @param val
-   * @returns {boolean}
-   */
-  function isExecutable(val) {
-    return type.isFunction(val) || (val instanceof CrunchTask);
-  }
-
-
-  //noinspection JSCommentMatchesSignature,JSValidateJSDoc
-  /**
-   * @param {number} [start]
-   * @param {number} [finish]
-   * @param {number} [increment]
-   * @param {boolean} [inclusive]
-   * @param {function|CrunchTask} fnBody
-   * @param {function|CrunchTask} fnTail
-   * @returns {CrunchTask}
-   */
-  function staticFor(/*{start, finish, increment, inclusive, } * n, fnBody, {fnTail}*/) {
-    var argsCount = arguments.length,
-      fnCount = 0;
-
-    while (isExecutable(arguments[argsCount - 1 - fnCount])) {
-      fnCount++;
-    }
-
-    var args = __slice.call(arguments, 0, argsCount - fnCount),
-      fns = __slice.call(arguments, -fnCount),
-      ranges = new Range(args),
-      taskBody = fns[0],
-      taskTail = fns[1] || function () {
-        };
-
-    if (!taskBody) {
-      return resolvedTask();
-    }
-
-    return internalFor(ranges, taskBody, taskTail);
-  }
-
-  function staticForEach(arr, taskBody, taskTail) {
-    return new CrunchTask(function (init, body, fin) {
-      var ranges,
-        ptr,
-        arrInternal = arr,
-        canRunCycle,
-        bodyFn = getExecutableFor(taskBody, this),
-        tailFn = getExecutableFor(taskTail, this);
-
-      init(function (_arr) {
-        if (_arr) {
-          arrInternal = arr;
-        }
-        ranges = new Range([0, arrInternal.length]);
-        canRunCycle = ranges.canAdvance(true);
-      });
-
-      body(function (resolve) {
-        if (canRunCycle) {
-          ptr = ranges.valueOf()[0];
-          bodyFn([arrInternal[ptr], ptr]);
-        }
-        if (!canRunCycle || !ranges.canAdvance()) {
-          resolve();
-        }
-      }, config.timeLimit, config.timeoutAmount);
-
-      fin(function () {
-        tailFn(ranges.valueOf());
-      });
+    fin(function () {
+      tailFn(memoInternal, ranges.valueOf());
     });
-  }
+  });
+}
 
-  function staticReduce(arr, memo, taskBody, taskTail) {
-    return new CrunchTask(function (init, body, fin) {
-      var ranges,
-        ptr,
-        arrInternal = arr,
-        memoInternal = memo,
-        canRunCycle,
-        bodyFn = getExecutableFor(taskBody, this),
-        tailFn = getExecutableFor(taskTail, this);
 
-      init(function (_arr, _memo) {
-        if (_arr) {
-          arrInternal = arr;
-        }
-        ranges = new Range([0, arrInternal.length]);
-        canRunCycle = ranges.canAdvance(true);
-        if (!type.isUndefined(_memo)) {
-          memoInternal = _memo;
-        }
-      });
-
-      body(function (resolve) {
-        if (canRunCycle) {
-          ptr = ranges.valueOf()[0];
-          memoInternal = bodyFn([memoInternal, arrInternal[ptr], ptr]);
-        }
-        if (!canRunCycle || !ranges.canAdvance()) {
-          resolve(memoInternal);
-        }
-      }, config.timeLimit, config.timeoutAmount);
-
-      fin(function () {
-        tailFn(memoInternal, ranges.valueOf());
-      });
-    });
-  }
-
-  function normalizeRanges() {
-    var args = __slice.call(arguments, 0);
-    return new Range(args);
-  }
-
-  function internalFor(_ranges, taskBody, taskTail) {
-    return new CrunchTask(function (init, body, fin) {
-      var ranges = _ranges, canRunCycle,
-        bodyFn = getExecutableFor(taskBody, this),
-        tailFn = getExecutableFor(taskTail, this);
-
-      init(function () {
-        var args = __slice.call(arguments, 0);
-        if (args.length) {
-          ranges = new Range(args);
-        }
-        canRunCycle = ranges.canAdvance(true);
-      });
-
-      body(function (resolve) {
-        if (canRunCycle) {
-          bodyFn(ranges.valueOf());
-        }
-        if (!canRunCycle || !ranges.canAdvance()) {
-          resolve();
-        }
-      }, config.timeLimit, config.timeoutAmount);
-
-      fin(function () {
-        tailFn(ranges.valueOf());
-      });
-    });
-  }
-
-  function resolvedTask() {
-    return new CrunchTask(function (init, body) {
-      body(function (resolve) {
-        resolve();
-      });
-    });
-  }
-
-  function getExecutableFor(task, ctx) {
-    if (type.isFunction(task)) {
-      return function (args) {
-        return task.apply(ctx || this, args);
-      };
-    } else if (task instanceof CrunchTask) {
-      return function (args) {
-        globals.staticParentTask = ctx;
-        return task.run.apply(task, args);
-      };
-    } else {
-      return function (k) {
-        return k;
-      };
-    }
-  }
-
-})();
-
-}).call(this,require('_process'))
-},{"./arrayToObject":1,"./bind":2,"./config":3,"./defer":5,"./error":6,"./events":7,"./extend":8,"./globals":9,"./mirror":10,"./partial":11,"./safe":12,"./together":13,"./type":14,"./typeRange":15,"_process":16,"promise-polyfill":17}],5:[function(require,module,exports){
+module.exports = staticReduce;
+},{"./config":4,"./ctFnGetExecutableFor":11,"./type":33,"./typeCrunchtask":34,"./typeRange":37}],23:[function(require,module,exports){
 /**
  * Created by ANDREW on 6/3/2015.
  */
@@ -918,7 +1092,7 @@ function defer(timeoutAmount, fn, args0) {
 }
 
 module.exports = defer;
-},{}],6:[function(require,module,exports){
+},{}],24:[function(require,module,exports){
 /**
  * Created by ANDREW on 6/3/2015.
  */
@@ -941,7 +1115,7 @@ function error(errType, msg) {
 }
 
 module.exports = error;
-},{"./type":14}],7:[function(require,module,exports){
+},{"./type":33}],25:[function(require,module,exports){
 /**
  * Created by ANDREW on 6/3/2015.
  */
@@ -958,7 +1132,6 @@ var config = configs.config;
  * @param hive
  * @param evt
  * @param fn*
- * @private
  */
 function _on(hive, evt, fn) {
   if (!fn) {
@@ -982,7 +1155,6 @@ function _on(hive, evt, fn) {
  * @param hive
  * @param evt
  * @params {...*} args
- * @private
  */
 function _trigger(hive, evt /*, args*/) {
   var args1 = __slice.call(arguments, 2);
@@ -1006,6 +1178,12 @@ function _trigger(hive, evt /*, args*/) {
   }
 }
 
+/**
+ *
+ * @param ctx {{}}
+ * @param _obj {{}}
+ * @returns {{on: {Function}, trigger: {Function}}}
+ */
 function serveEvents(ctx, _obj) {
   var obj = _obj || {};
   return {
@@ -1016,13 +1194,14 @@ function serveEvents(ctx, _obj) {
 
 
 module.exports = serveEvents;
-},{"./bind":2,"./config":3}],8:[function(require,module,exports){
+},{"./bind":2,"./config":4}],26:[function(require,module,exports){
 /**
  * Created by ANDREW on 6/3/2015.
  */
 'use strict';
 
-var __hasOwnProperty = {}.hasOwnProperty;
+var __hasOwnProperty = {}.hasOwnProperty,
+  __slice = [].slice;
 
 /**
  *
@@ -1032,6 +1211,10 @@ var __hasOwnProperty = {}.hasOwnProperty;
  * @private
  */
 function _objExtend(target, source) {
+  if (arguments.length > 2) {
+    return _objExtendMult.apply(null, arguments);
+  }
+
   for (var prop in source) {
     //noinspection JSUnfilteredForInLoop
     if (__hasOwnProperty.call(source, prop)) {
@@ -1042,18 +1225,27 @@ function _objExtend(target, source) {
   return target;
 }
 
+function _objExtendMult(target/*, sources*/) {
+  var sources = __slice.call(arguments, 1), source;
+  while (source = sources.shift()) { // jshint ignore:line
+    _objExtend(target, source);
+  }
+  return target;
+}
+
 module.exports = _objExtend;
 
-},{}],9:[function(require,module,exports){
+},{}],27:[function(require,module,exports){
 /**
  * Created by ANDREW on 6/3/2015.
  */
 module.exports = {
   staticLastSafeError: null,
   staticParentTask: null,
-  staticSecurityLock: null
+  staticSecurityLock: null,
+  staticCTImpl: function(){}
 };
-},{}],10:[function(require,module,exports){
+},{}],28:[function(require,module,exports){
 /**
  * Created by ANDREW on 6/3/2015.
  */
@@ -1081,7 +1273,24 @@ function _initObjectProps(obj, prefix) {
 }
 
 module.exports = _initObjectProps;
-},{}],11:[function(require,module,exports){
+},{}],29:[function(require,module,exports){
+/**
+ * Created by ANDREW on 6/4/2015.
+ */
+'use strict';
+
+var uid = 0;
+
+/**
+ * Generates new id.
+ * @returns {number}
+ */
+function nextUid() {
+  return ++uid;
+}
+
+module.exports = nextUid;
+},{}],30:[function(require,module,exports){
 /**
  * Created by ANDREW on 6/3/2015.
  */
@@ -1117,7 +1326,7 @@ function _fnPartial(/*{ctx}, fn, args..*/) {
 }
 
 module.exports = _fnPartial;
-},{"./type":14}],12:[function(require,module,exports){
+},{"./type":33}],31:[function(require,module,exports){
 /**
  * Created by ANDREW on 6/3/2015.
  */
@@ -1163,7 +1372,7 @@ function safe(ctx, fn) {
 }
 
 module.exports = safe;
-},{"./config":3,"./globals":9,"./type":14}],13:[function(require,module,exports){
+},{"./config":4,"./globals":27,"./type":33}],32:[function(require,module,exports){
 /**
  * Created by ANDREW on 6/3/2015.
  */
@@ -1177,7 +1386,6 @@ var type = require('./type');
  *
  * @params {...function} fns
  * @returns {Function}
- * @private
  */
 function _fnTogether(/* fns */) {
   var auxFns = __slice.call(arguments, 0);
@@ -1191,7 +1399,7 @@ function _fnTogether(/* fns */) {
 }
 
 module.exports = _fnTogether;
-},{"./type":14}],14:[function(require,module,exports){
+},{"./type":33}],33:[function(require,module,exports){
 /**
  * Created by ANDREW on 6/2/2015.
  */
@@ -1224,7 +1432,156 @@ function getTestFor(fullName) {
 
 
 module.exports = result;
-},{}],15:[function(require,module,exports){
+},{}],34:[function(require,module,exports){
+/**
+ * Created by ANDREW on 6/4/2015.
+ */
+'use strict';
+
+var globals = require('./globals');
+
+/**
+ *
+ * @callback descriptionFunc
+ * @param {function} initSetup
+ * @param {function} bodySetup
+ * @param {function} finSetup
+ */
+/**
+ *
+ * @param {descriptionFunc} descriptionFn
+ * @returns {CrunchTask}
+ * @constructor
+ */
+function CrunchTask(descriptionFn) {
+  // always dealing with the `new` keyword instantiation
+  if (!(this instanceof CrunchTask)) {
+    return new CrunchTask(descriptionFn);
+  }
+  return globals.staticCTImpl(this, descriptionFn);
+}
+
+
+module.exports = CrunchTask;
+},{"./globals":27}],35:[function(require,module,exports){
+/**
+ * Created by ANDREW on 6/4/2015.
+ */
+'use strict';
+
+var __slice = [].slice;
+
+var type = require('./type'),
+  bindAll = require('./bindAll'),
+  nextUid = require('./nextUid'),
+  serveEvents = require('./events'),
+  extend = require('./extend'),
+  partial = require('./partial'),
+  globals = require('./globals'),
+
+  protoMethods = require('./ctProtoBoundMethods'),
+  protoRun = require('./ctProtoRun'),
+  CrunchTask = require('./typeCrunchtask'),
+  EVENT_NAMES = require('./constEventNames');
+
+globals.staticCTImpl = function (ctx, descriptionFn) {
+  return prepareBlankTask(ctx, serveEvents(ctx), descriptionFn);
+};
+
+function prepareBlankTask(task, events, descriptionFn) {
+
+  return extend(
+    bindAll(task, task, protoMethods),
+    {
+      id       : nextUid(),
+      timestamp: new Date() - 0,
+      runCount : 0,
+
+      run     : partial(task, protoRun, descriptionFn, events),
+      onRun   : partial(events.on, EVENT_NAMES.run),
+      onIdle  : partial(events.on, EVENT_NAMES.idle),
+      onError : partial(events.on, EVENT_NAMES.error),
+      done    : partial(events.on, EVENT_NAMES.done),
+      fail    : partial(events.on, EVENT_NAMES.fail),
+      always  : partial(events.on, [EVENT_NAMES.done, EVENT_NAMES.fail, EVENT_NAMES.error].join()),
+      progress: partial(events.on, EVENT_NAMES.progress),
+
+      _signalIdle: function () {
+        if (!globals.staticSecurityLock) {
+          return;
+        }
+        globals.staticSecurityLock = false;
+        events.trigger(EVENT_NAMES.idle);
+      }
+    });
+}
+
+module.exports = CrunchTask;
+},{"./bindAll":3,"./constEventNames":5,"./ctProtoBoundMethods":16,"./ctProtoRun":17,"./events":25,"./extend":26,"./globals":27,"./nextUid":29,"./partial":30,"./type":33,"./typeCrunchtask":34}],36:[function(require,module,exports){
+/**
+ * Created by ANDREW on 6/4/2015.
+ */
+'use strict';
+
+var __hasOwnProperty = {}.hasOwnProperty;
+
+var type = require('./type'),
+  extend = require('./extend'),
+  configs = require('./config'),
+  staticFor = require('./ctStaticFor'),
+  staticForEach = require('./ctStaticForEach'),
+  staticReduce = require('./ctStaticReduce'),
+  normalizeRanges = require('./ctStaticNormalizeRanges'),
+
+  CrunchTask = require('./typeCrunchtask');
+
+var config = configs.config,
+  defaultConfig = configs.defaultConfig;
+
+extend(CrunchTask, {
+  /**
+   * @deprecated use range
+   * @type {staticFor}
+   */
+  'for': staticFor,
+  range: staticFor,
+  rangeCheck: normalizeRanges,
+
+  /**
+   * @deprecated use range
+   * @type {Range}
+   */
+  rangeNextAndCheck: function(range, checkOnly) {
+    return range.canAdvance(checkOnly);
+  },
+
+  forEach: staticForEach,
+  reduce: staticReduce,
+
+  /**
+   *
+   * @param {{boolean}|{ timeLimit:Number, timeoutAmount:Number, debug:boolean }} obj
+   */
+  config: function _config(obj) {
+    if (!type.isObject(obj)) {
+      return _config(defaultConfig);
+    }
+    var result = {};
+    for (var prop in obj) {
+      //noinspection JSUnfilteredForInLoop
+      if (__hasOwnProperty.call(obj, prop) && __hasOwnProperty.call(config, prop)) {
+        //noinspection JSUnfilteredForInLoop
+        config[prop] = obj[prop];
+        //noinspection JSUnfilteredForInLoop
+        result[prop] = obj[prop];
+      }
+    }
+    return result;
+  }
+});
+
+module.exports  = CrunchTask;
+},{"./config":4,"./ctStaticFor":19,"./ctStaticForEach":20,"./ctStaticNormalizeRanges":21,"./ctStaticReduce":22,"./extend":26,"./type":33,"./typeCrunchtask":34}],37:[function(require,module,exports){
 /**
  * Created by ANDREW on 6/3/2015.
  */
@@ -1365,7 +1722,7 @@ function parseRangeArgs(args, preventRecursion) {
 }
 
 module.exports = Range;
-},{"./error":6,"./type":14}],16:[function(require,module,exports){
+},{"./error":24,"./type":33}],38:[function(require,module,exports){
 // shim for using process in browser
 
 var process = module.exports = {};
@@ -1457,7 +1814,7 @@ process.chdir = function (dir) {
 };
 process.umask = function() { return 0; };
 
-},{}],17:[function(require,module,exports){
+},{}],39:[function(require,module,exports){
 (function (global){
 (function() {
     var root;
@@ -1646,4 +2003,4 @@ process.umask = function() { return 0; };
 	};
 })();
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{}]},{},[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15]);
+},{}]},{},[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37]);
