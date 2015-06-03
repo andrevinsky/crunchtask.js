@@ -118,4 +118,8 @@ module.exports = function (config) {
     config.browsers = ['Chrome_travis_ci']; // ['Chrome_travis_ci', 'PhantomJS']; //
   }
 
+  if (process.env.CODESHIP) {
+    config.browsers = ['Chrome', 'PhantomJS', 'Firefox'];
+  }
+
 };
