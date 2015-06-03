@@ -3,7 +3,7 @@ Promise = Promise
 
 if (typeof require is 'function')
   CrunchTask = require('../../lib/crunchtask')
-  Promise = require('../../node_modules/promise-polyfill/Promise')
+  Promise = require('../../node_modules/promise-polyfill')
   utils = require('./utils.coffee')
 
 root = typeof window is 'object' && window ? window : global
@@ -125,7 +125,10 @@ describe 'CrunchTask API Spec.', ->
       return
 
     it 'run-task instance is a Promise-instance', ->
-      expect(runInst instanceof Promise).toBe(true)
+      isPromiseBased = try runInst instanceof Promise catch e
+      if (!isPromiseBased)
+        isPromiseBased = /^function\s+Promise\(/.test(runInst.constructor.toString())
+      expect(isPromiseBased).toBe(true)
       return
 
     it 'method `then()` - is a Promise method', ->

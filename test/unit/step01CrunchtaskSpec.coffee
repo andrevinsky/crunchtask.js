@@ -6,7 +6,7 @@ Promise = Promise
 
 if (typeof require is 'function')
   CrunchTask = require('../../lib/crunchtask')
-  Promise = require('../../node_modules/promise-polyfill/Promise')
+  Promise = require('../../node_modules/promise-polyfill')
   utils = require('./utils.coffee')
 
 root = typeof window is 'object' && window ? window : global

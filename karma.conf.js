@@ -1,7 +1,9 @@
 // Karma configuration
 // Generated on Sun Nov 30 2014 04:50:50 GMT+0400 (GET)
 
-module.exports = function(config) {
+'use strict';
+
+module.exports = function (config) {
   config.set({
 
     // base path that will be used to resolve all patterns (eg. files, exclude)
@@ -15,23 +17,21 @@ module.exports = function(config) {
 
     // list of files / patterns to load in the browser
     files: [
-      'bower_components/promise-polyfill/Promise.js',
-      'lib/*.js',
+      'build/crunchtask.js',
       'test/unit/utils.coffee',
       'test/**/*Spec.coffee'
     ],
 
 
     // list of files to exclude
-    exclude: [
-    ],
+    exclude: [],
 
 
     // preprocess matching files before serving them to the browser
     // available preprocessors: https://npmjs.org/browse/keyword/karma-preprocessor
     preprocessors: {
       '**/*.coffee': ['coffee'],
-      'lib/*.js': ['coverage']
+      'lib/*.js'   : ['coverage']
     },
 
 
@@ -60,27 +60,26 @@ module.exports = function(config) {
 
     // start these browsers
     // available browser launchers: https://npmjs.org/browse/keyword/karma-launcher
-    browsers: ['Chrome', 'PhantomJS', 'Firefox', 'IE' ],
-
+    browsers: ['Chrome', 'PhantomJS', 'Firefox', 'IE'],
 
 
     // Continuous Integration mode
     // if true, Karma captures browsers, runs the tests and exits
-    singleRun: true,
+    singleRun               : true,
     browserNoActivityTimeout: 100000,
 
-    plugins : ['karma-*', //],
+    plugins        : ['karma-*', //],
       'karma-jasmine',
       'karma-coverage',
       'karma-phantomjs-launcher',
       'karma-ie-launcher',
       'karma-firefox-launcher',
-    //plugins :
-        //[
-    //  //'karma-junit-reporter',
-    //  'karma-chrome-launcher',
+      //plugins :
+      //[
+      //  //'karma-junit-reporter',
+      //  'karma-chrome-launcher',
       'karma-phantomjs-launcher'
-        ],
+    ],
     //  //'karma-firefox-launcher',
     //  //'karma-opera-launcher',
     //  //'karma-ie-launcher',
@@ -90,32 +89,32 @@ module.exports = function(config) {
     //  Custom launcher for Travis-CI
     customLaunchers: {
       Chrome_travis_ci: {
-        base: 'Chrome',
+        base : 'Chrome',
         flags: ['--no-sandbox']
       }
     },
 
     coffeePreprocessor: {
       // options passed to the coffee compiler
-      options: {
-        bare: true,
+      options      : {
+        bare     : true,
         sourceMap: true
       },
       // transforming the filenames
-      transformPath: function(path) {
+      transformPath: function (path) {
         return path.replace(/\.coffee$/, '.js');
       }
     },
 
     coverageReporter: {
-      type : 'lcov',
+      type: 'lcov',
       dir : 'coverage/'
     }
 
 
   });
 
-  if (process.env.TRAVIS){
+  if (process.env.TRAVIS) {
     config.browsers = ['Chrome_travis_ci', 'PhantomJS'];
   }
 

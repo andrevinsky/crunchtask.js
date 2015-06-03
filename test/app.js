@@ -2,8 +2,8 @@
  * Created by ANDREW on 1/31/2015.
  * Playground
  */
-var Promise = require('../bower_components/promise-polyfill/Promise.min');
-var CrunchTask = require('../lib/crunchtask');
+//var Promise = require('../bower_components/promise-polyfill/Promise.min');
+//var CrunchTask = require('../lib/crunchtask');
 
 //var undef;
 //console.info(CrunchTask.rangeCheck());

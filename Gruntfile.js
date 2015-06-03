@@ -49,8 +49,51 @@ module.exports = function(grunt) {
       browser: {
         src: 'dst/<%= pkg.name %>.js',
         dest: 'dst/<%= pkg.name %>.min.js'
+      },
+      browserify: {
+        src: 'build/<%= pkg.name %>.js',
+        dest: 'build/<%= pkg.name %>.min.js'
       }
 		},
+
+    browserify: {
+      dist: {
+        files: {
+          'build/crunchtask.js': ['lib/*.js']
+        },
+        options: {
+          transform: ['coffeeify']
+        }
+      }
+    },
+
+    watchify: {
+      options: {
+      //  // defaults options used in b.bundle(opts)
+      //  detectGlobals: true,
+      //  insertGlobals: false,
+      //  ignoreMissing: false,
+      //  debug: false,
+      //  standalone: false,
+      //
+        keepalive: true
+      //  callback: function(b) {
+      //    // configure the browserify instance here
+      //    //b.add();
+      //    //b.require();
+      //    //b.external();
+      //    //b.ignore();
+      //    //b.transform();
+      //
+      //    // return it
+      //    return b;
+      //  }
+      },
+      example: {
+        src: './lib/crunchtask.js',
+        dest: 'build/crunchtask.js'
+      }
+    },
 
     karma: {
       unit: {
@@ -63,14 +106,18 @@ module.exports = function(grunt) {
 	grunt.loadNpmTasks('grunt-contrib-concat');
 	grunt.loadNpmTasks('grunt-contrib-uglify');
 
+  grunt.loadNpmTasks('grunt-browserify');
+
+  grunt.loadNpmTasks('grunt-watchify');
+
   grunt.loadNpmTasks('grunt-bump');
 
   grunt.loadNpmTasks('grunt-karma');
 
-
   grunt.registerTask('test', ['karma']);
 
-	grunt.registerTask('build', ['concat:browser', 'uglify:browser']);
+	//grunt.registerTask('build', ['concat:browser', 'uglify:browser']);
+	grunt.registerTask('build', ['browserify', 'uglify:browserify']);
 	grunt.registerTask('bump-minor', ['bump:minor']);
 
 };
