@@ -8,7 +8,7 @@
     }
   ],
   "description": "A library that executes long-running tasks without freezing of a browser and employs an easy usage pattern ",
-  "main": "dst/crunchtask.js",
+  "main": "build/crunchtask.js",
   "keywords": [
     "crunch",
     "task",
@@ -27,7 +27,6 @@
     "url": "https://github.com/AndrewRevinsky/crunchtask.js.git"
   },
   "dependencies": {
-    "promise-polyfill": "~1.1.4"
   },
   "devDependencies": {
     "jasmine": "~2.2.1"
