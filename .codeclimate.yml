@@ -1,0 +1,10 @@
+# Save as .codeclimate.yml (note leading .) in project root directory
+languages:
+  JavaScript: true
+exclude_paths:
+- "dest/crunchtask.js"
+- "dest/crunchtask.min.js"
+- "build/crunchtask.js"
+- "build/crunchtask.min.js"
+- "dst/crunchtask.js"
+- "dst/crunchtask.min.js"
