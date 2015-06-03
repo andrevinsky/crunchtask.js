@@ -8,3 +8,5 @@ exclude_paths:
 - "build/crunchtask.min.js"
 - "dst/crunchtask.js"
 - "dst/crunchtask.min.js"
+- "karma.conf.js"
+- "Gruntfile.js"
