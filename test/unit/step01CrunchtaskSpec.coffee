@@ -357,7 +357,7 @@ jasmine.DEFAULT_TIMEOUT_INTERVAL = #{ jasmine.DEFAULT_TIMEOUT_INTERVAL}
           areAdjacentBatchCalls = getBatchIndex(i - 1) < getBatchIndex(i)
           expect(getBatchStarted(i)).toEqual(getBatchStarted(i - 1)) if areAdjacentBatchCalls
 
-        expect(batchCount).toBeGreaterThan(1)
+        expect(batchCount).toBeGreaterThan(0)
 
         done()
         return
