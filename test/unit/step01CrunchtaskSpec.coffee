@@ -5,8 +5,8 @@ CrunchTask = CrunchTask
 Promise = Promise
 
 if (typeof require is 'function')
-  CrunchTask = require('../../lib/crunchtask')
-  Promise = require('../../node_modules/promise-polyfill')
+  CrunchTask = require('../../build/crunchtask')
+  Promise = require('promise-polyfill')
   utils = require('./utils.coffee')
 
 root = typeof window is 'object' && window ? window : global
@@ -39,12 +39,12 @@ jasmine.DEFAULT_TIMEOUT_INTERVAL = #{ jasmine.DEFAULT_TIMEOUT_INTERVAL}
     it 'Use a function named a _description function_ to describe the task\'s initialization, body, and finalization. It is executed only when the task is run and under the same stack.', (done)->
 
       foo = {
-        ctor:  (init, body, fin)->
+        ctor: (init, body, fin)->
       }
 
       spyOn(foo, 'ctor').and.callThrough()
 
-      task = new CrunchTask foo.ctor
+      task = new CrunchTask(foo.ctor)
       expect(foo.ctor).not.toHaveBeenCalled()
 
       task.run()
@@ -58,7 +58,7 @@ jasmine.DEFAULT_TIMEOUT_INTERVAL = #{ jasmine.DEFAULT_TIMEOUT_INTERVAL}
       return
 
     it 'When a task is run, the _description function_ receives the 3 functions as parameters: `init`, `body`, `fin`, called _init setup_, _body setup_, and _fin setup_ respectively.', (done) ->
-      task = new CrunchTask (init, body, fin)->
+      task = new CrunchTask((init, body, fin)->
 
         expect(init).toBeDefined()
         expect(type(init)).toEqual('function')
@@ -73,12 +73,13 @@ jasmine.DEFAULT_TIMEOUT_INTERVAL = #{ jasmine.DEFAULT_TIMEOUT_INTERVAL}
 
         done()
         return
+      )
 
       task.run().abort()
       return
 
     it 'The _init setup_ function (`init` parameter) expects to be called with a single parameter, called an _init function_. It provides the means to inject runtime values (passed to the the `task.run(args...)` method) into the common execution scope. This scope is found under the _description function_.', (done) ->
-      task1 = new CrunchTask (init, body, fin)->
+      task1 = new CrunchTask( (init, body, fin)->
         arg1 = null
         arg2 = null
         init (_arg1, _arg2)->
@@ -91,6 +92,7 @@ jasmine.DEFAULT_TIMEOUT_INTERVAL = #{ jasmine.DEFAULT_TIMEOUT_INTERVAL}
           resove()
           return
         return
+      )
 
       task2 = new CrunchTask (init, body, fin)->
         arg1 = null
