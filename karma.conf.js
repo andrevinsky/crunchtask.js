@@ -115,7 +115,7 @@ module.exports = function (config) {
   });
 
   if (process.env.TRAVIS) {
-    config.browsers = ['Chrome_travis_ci', 'PhantomJS'];
+    config.browsers = ['Chrome_travis_ci']; // ['Chrome_travis_ci', 'PhantomJS']; //
   }
 
 };

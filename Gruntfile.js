@@ -1,6 +1,6 @@
 module.exports = function(grunt) {
 
-	grunt.initConfig({
+	grunt.initConfig({ // jshint ignore:line
 		pkg: grunt.file.readJSON('package.json'),
 
     bump: {
