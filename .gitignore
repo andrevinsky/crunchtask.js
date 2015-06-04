@@ -49,6 +49,7 @@ crashlytics-build.properties
 
 logs/*
 !.gitkeep
+coverage/
 node_modules/
 bower_components/
 tmp
