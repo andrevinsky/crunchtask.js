@@ -56,8 +56,7 @@ module.exports = _fnBind;
  */
 'use strict';
 
-var __hasOwnProperty = {}.hasOwnProperty,
-  __slice = [].slice;
+var __hasOwnProperty = {}.hasOwnProperty;
 
 var type = require('./type'),
   bind = require('./bind');
@@ -288,13 +287,8 @@ module.exports  = isExecutable;
  */
 'use strict';
 
-var __slice = [].slice;
-
 var type = require('./type'),
-  globals = require('./globals'),
   defer = require('./defer'),
-  partial = require('./partial'),
-  safe = require('./safe'),
   config = require('./config').config,
   STATE_NAMES = require('./constStateNames'),
   NEED_REPEAT_STATES = require('./constNeedRepeatStates'),
@@ -383,22 +377,17 @@ function proceedBodyFn(instanceApi, isFirstTime) {
 
 
 module.exports = proceedBodyFn;
-},{"./config":4,"./constNeedRepeatStates":6,"./constStateNames":8,"./constVerboseStates":9,"./defer":23,"./globals":27,"./partial":30,"./safe":31,"./type":33}],14:[function(require,module,exports){
+},{"./config":4,"./constNeedRepeatStates":6,"./constStateNames":8,"./constVerboseStates":9,"./defer":23,"./type":33}],14:[function(require,module,exports){
 /**
  * Created by ANDREW on 6/4/2015.
  */
 'use strict';
 
-var __slice = [].slice;
-
-var globals = require('./globals'),
-  defer = require('./defer'),
-  partial = require('./partial'),
+var defer = require('./defer'),
   safe = require('./safe'),
   config = require('./config').config,
   proceedBodyFn = require('./ctFnProceedBody'),
 
-  STATE_NAMES = require('./constStateNames'),
   SETTLED_STATES = require('./constSettledStates');
 
 
@@ -415,6 +404,7 @@ function proceedDescriptionFn(instanceApi) {
   if (config.trace) {
     console.log('before descriptionFn run', new Date() - 0);
   }
+
   if (safe(thisTask, descriptionFn)(
       instanceApi.setupInit,
       instanceApi.setupBody,
@@ -469,13 +459,11 @@ function proceedDescriptionFn(instanceApi) {
 
 
 module.exports = proceedDescriptionFn;
-},{"./config":4,"./constSettledStates":7,"./constStateNames":8,"./ctFnProceedBody":13,"./defer":23,"./globals":27,"./partial":30,"./safe":31}],15:[function(require,module,exports){
+},{"./config":4,"./constSettledStates":7,"./ctFnProceedBody":13,"./defer":23,"./safe":31}],15:[function(require,module,exports){
 /**
  * Created by ANDREW on 6/4/2015.
  */
 'use strict';
-
-var __slice = [].slice;
 
 var CrunchTask = require('./typeCrunchtask');
 
@@ -635,8 +623,7 @@ var type = require('./type'),
   config = require('./config').config,
   EVENT_NAMES = require('./constEventNames'),
   STATE_NAMES = require('./constStateNames'),
-  SETTLED_STATES = require('./constSettledStates'),
-  Promise = require('promise-polyfill');
+  SETTLED_STATES = require('./constSettledStates');
 
 function encapsulateRunInstance(instanceApi, taskEvents, resolveReject, promise) {
 
@@ -866,7 +853,7 @@ function encapsulateRunInstance(instanceApi, taskEvents, resolveReject, promise)
 
 }
 module.exports = encapsulateRunInstance;
-},{"./config":4,"./constEventNames":5,"./constSettledStates":7,"./constStateNames":8,"./defer":23,"./events":25,"./extend":26,"./globals":27,"./partial":30,"./safe":31,"./together":32,"./type":33,"promise-polyfill":39}],19:[function(require,module,exports){
+},{"./config":4,"./constEventNames":5,"./constSettledStates":7,"./constStateNames":8,"./defer":23,"./events":25,"./extend":26,"./globals":27,"./partial":30,"./safe":31,"./together":32,"./type":33}],19:[function(require,module,exports){
 /**
  * Created by ANDREW on 6/4/2015.
  */
@@ -874,13 +861,9 @@ module.exports = encapsulateRunInstance;
 
 var __slice = [].slice;
 
-var globals = require('./globals'),
-  defer = require('./defer'),
-  partial = require('./partial'),
-  isExecutable = require('./ctFnIsExecutable'),
+var isExecutable = require('./ctFnIsExecutable'),
 
   config = require('./config').config,
-  STATE_NAMES = require('./constStateNames'),
   getExecutableFor = require('./ctFnGetExecutableFor'),
   resolvedTask = require('./ctFnResolvedTask'),
 
@@ -950,13 +933,11 @@ function internalFor(_ranges, taskBody, taskTail) {
 
 
 module.exports = staticFor;
-},{"./config":4,"./constStateNames":8,"./ctFnGetExecutableFor":11,"./ctFnIsExecutable":12,"./ctFnResolvedTask":15,"./defer":23,"./globals":27,"./partial":30,"./typeCrunchtask":34,"./typeRange":37}],20:[function(require,module,exports){
+},{"./config":4,"./ctFnGetExecutableFor":11,"./ctFnIsExecutable":12,"./ctFnResolvedTask":15,"./typeCrunchtask":34,"./typeRange":37}],20:[function(require,module,exports){
 /**
  * Created by ANDREW on 6/4/2015.
  */
 'use strict';
-
-var __slice = [].slice;
 
 var config = require('./config').config,
   getExecutableFor = require('./ctFnGetExecutableFor'),
@@ -1469,10 +1450,7 @@ module.exports = CrunchTask;
  */
 'use strict';
 
-var __slice = [].slice;
-
-var type = require('./type'),
-  bindAll = require('./bindAll'),
+var bindAll = require('./bindAll'),
   nextUid = require('./nextUid'),
   serveEvents = require('./events'),
   extend = require('./extend'),
@@ -1484,9 +1462,11 @@ var type = require('./type'),
   CrunchTask = require('./typeCrunchtask'),
   EVENT_NAMES = require('./constEventNames');
 
+
 globals.staticCTImpl = function (ctx, descriptionFn) {
   return prepareBlankTask(ctx, serveEvents(ctx), descriptionFn);
 };
+
 
 function prepareBlankTask(task, events, descriptionFn) {
 
@@ -1517,7 +1497,7 @@ function prepareBlankTask(task, events, descriptionFn) {
 }
 
 module.exports = CrunchTask;
-},{"./bindAll":3,"./constEventNames":5,"./ctProtoBoundMethods":16,"./ctProtoRun":17,"./events":25,"./extend":26,"./globals":27,"./nextUid":29,"./partial":30,"./type":33,"./typeCrunchtask":34}],36:[function(require,module,exports){
+},{"./bindAll":3,"./constEventNames":5,"./ctProtoBoundMethods":16,"./ctProtoRun":17,"./events":25,"./extend":26,"./globals":27,"./nextUid":29,"./partial":30,"./typeCrunchtask":34}],36:[function(require,module,exports){
 /**
  * Created by ANDREW on 6/4/2015.
  */
