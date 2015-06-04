@@ -31,7 +31,8 @@ module.exports = function (config) {
     // available preprocessors: https://npmjs.org/browse/keyword/karma-preprocessor
     preprocessors: {
       '**/*.coffee': ['coffee'],
-      'lib/*.js'   : ['coverage']
+      'lib/*.js'   : ['coverage'],
+      'build/crunchtask.js'   : ['coverage']
     },
 
 
