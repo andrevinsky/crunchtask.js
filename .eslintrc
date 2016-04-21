@@ -188,7 +188,7 @@ rules:
   eol-last: 0                    # enforce newline at the end of file, with no multiple empty lines
   func-names: 0                  # require function expressions to have a name
   func-style: 0                  # enforces use of function declarations or expressions
-  key-spacing: 2                 # enforces spacing between keys and values in object literal properties
+#  key-spacing: 2                 # enforces spacing between keys and values in object literal properties
   max-nested-callbacks: [2, 4]   # specify the maximum depth callbacks can be nested
   new-cap: 0                     # require a capital letter for constructors
   new-parens: 2                  # disallow the omission of parentheses when invoking a constructor with no arguments
@@ -201,16 +201,16 @@ rules:
   no-spaced-func: 2              # disallow space between function identifier and application
   no-ternary: 0                  # disallow the use of ternary operators
 
-  no-trailing-spaces: 2          # disallow trailing whitespace at the end of lines
+#  no-trailing-spaces: 2          # disallow trailing whitespace at the end of lines
   no-multiple-empty-lines: 0     # disallow multiple empty lines
   no-underscore-dangle: 0        # disallow dangling underscores in identifiers
-  no-extra-parens: 2                # disallow wrapping of non-IIFE statements in parens
+#  no-extra-parens: 2                # disallow wrapping of non-IIFE statements in parens
   one-var: 0                     # allow just one var statement per function
   padded-blocks: 0               # enforce padding within blocks
   quotes:                        # specify whether double or single quotes should be used
     [1, "single", "avoid-escape"]
   quote-props: 0                 # require quotes around object literal property names
-  semi: [2, "never"]             # require or disallow use of semicolons instead of ASI
+#  semi: [2, "never"]             # require or disallow use of semicolons instead of ASI
   semi-spacing: 0
   sort-vars: 0                   # sort variables within the same declaration block
   keyword-spacing: 2             # require a space after certain keywords

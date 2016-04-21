@@ -33,6 +33,7 @@ module.exports = function(options) {
           moduleIds: true,
           comments: false,
           presets: ['es2015'],
+          // presets: ['es2015-rollup'],
           plugins: ['transform-es2015-modules-umd']
         }
       ).code

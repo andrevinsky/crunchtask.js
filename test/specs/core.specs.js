@@ -4,7 +4,61 @@
 
 /* global Crunchtask */
 describe('Core', function() {
-  it('Greeter exsists', () => expect(Crunchtask).is.not.undefined )
+  it('Crunchtask exists', () => expect(Crunchtask).is.not.undefined );
+
+  it('Crunchtask has properties and methods', () => {
+    const generator = () => new Crunchtask();
+    expect(generator).to.not.throw(Error);
+
+    const task = generator();
+    const fn = () => task();
+
+    expect(task).to.exist;
+    expect(typeof task, 'is executable').to.equal('function');
+    expect(fn, 'task is executable').to.not.throw();
+
+    expect(task, 'id').to.have.property('id');
+    expect(task, 'timestamp').to.have.property('timestamp');
+    expect(task, 'runCount').to.have.property('runCount');
+
+    expect(task.then, 'then()').to.exist;
+    expect(typeof task.then).to.equal('function');
+
+    expect(task.onRun, 'onRun()').to.exist;
+    expect(typeof task.onRun).to.equal('function');
+
+    expect(task.onIdle, 'onIdle()').to.exist;
+    expect(typeof task.onIdle).to.equal('function');
+
+    expect(task.onError, 'onError()').to.exist;
+    expect(typeof task.onError).to.equal('function');
+
+    expect(task.done, 'done()').to.exist;
+    expect(typeof task.done).to.equal('function');
+
+    expect(task.fail, 'fail()').to.exist;
+    expect(typeof task.fail).to.equal('function');
+
+    expect(task.always, 'always()').to.exist;
+    expect(typeof task.always).to.equal('function');
+
+    expect(task.progress, 'progress()').to.exist;
+    expect(typeof task.progress).to.equal('function');
+
+    expect(task.isIdle, 'isIdle()').to.exist;
+    expect(typeof task.isIdle).to.equal('function');
+
+    expect(task.pause, 'pause()').to.exist;
+    expect(typeof task.pause).to.equal('function');
+
+    expect(task.resume, 'resume()').to.exist;
+    expect(typeof task.resume).to.equal('function');
+
+    expect(task.abort, 'abort()').to.exist;
+    expect(typeof task.abort).to.equal('function');
+
+  });
+
 
   // it('it can send friendly messages', () => {
   //   var greeter = new Greeter()

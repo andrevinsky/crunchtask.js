@@ -5,7 +5,8 @@ module.exports = function(options) {
   options = utils.extend({
     // flag used to trigger only the local tests without using saucelabs
     saucelabs: false
-  }, options)
+  }, options);
+  
   // run karma
   return utils.exec(
     './node_modules/.bin/karma',
