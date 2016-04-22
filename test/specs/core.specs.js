@@ -3,62 +3,82 @@
  */
 
 /* global Crunchtask */
-describe('Core', function() {
-  it('Crunchtask exists', () => expect(Crunchtask).is.not.undefined );
+describe('Core', function () {
+  it('Crunchtask exists', () => expect(Crunchtask).is.not.undefined);
+
+  it('Crunchtask has static methods', () => {
+    [
+      'for',
+      'range',
+      'rangeCheck',
+      'rangeNextAndCheck',
+      'forEach',
+      'reduce',
+      'config'
+    ].forEach(method => {
+      expect(Crunchtask[method], `Method exists: ${method}`).to.exist;
+      expect(typeof Crunchtask[method]).to.equal('function');
+    })
+  });
 
   it('Crunchtask has properties and methods', () => {
     const generator = () => new Crunchtask();
     expect(generator).to.not.throw(Error);
 
     const task = generator();
-    const fn = () => task();
-
     expect(task).to.exist;
     expect(typeof task, 'is executable').to.equal('function');
+
+    const fn = () => task();
     expect(fn, 'task is executable').to.not.throw();
 
     expect(task, 'id').to.have.property('id');
     expect(task, 'timestamp').to.have.property('timestamp');
     expect(task, 'runCount').to.have.property('runCount');
-
-    expect(task.then, 'then()').to.exist;
-    expect(typeof task.then).to.equal('function');
-
-    expect(task.onRun, 'onRun()').to.exist;
-    expect(typeof task.onRun).to.equal('function');
-
-    expect(task.onIdle, 'onIdle()').to.exist;
-    expect(typeof task.onIdle).to.equal('function');
-
-    expect(task.onError, 'onError()').to.exist;
-    expect(typeof task.onError).to.equal('function');
-
-    expect(task.done, 'done()').to.exist;
-    expect(typeof task.done).to.equal('function');
-
-    expect(task.fail, 'fail()').to.exist;
-    expect(typeof task.fail).to.equal('function');
-
-    expect(task.always, 'always()').to.exist;
-    expect(typeof task.always).to.equal('function');
-
-    expect(task.progress, 'progress()').to.exist;
-    expect(typeof task.progress).to.equal('function');
-
-    expect(task.isIdle, 'isIdle()').to.exist;
-    expect(typeof task.isIdle).to.equal('function');
-
-    expect(task.pause, 'pause()').to.exist;
-    expect(typeof task.pause).to.equal('function');
-
-    expect(task.resume, 'resume()').to.exist;
-    expect(typeof task.resume).to.equal('function');
-
-    expect(task.abort, 'abort()').to.exist;
-    expect(typeof task.abort).to.equal('function');
+    
+    [
+      'then',
+      'onRun',
+      'onIdle',
+      'onError',
+      'done',
+      'fail',
+      'always',
+      'progress',
+      'isIdle',
+      'pause',
+      'resume',
+      'abort'
+    ].forEach(method => {
+      expect(task[method], `Method exists: ${method}`).to.exist;
+      expect(typeof task[method]).to.equal('function');
+    });
 
   });
 
+  it('Crunchtask\'s run-instance properties and methods', () => {
+    const generator = () => (new Crunchtask())();
+    const runTask = generator();
+
+    expect(runTask).to.exist;
+    expect(runTask).to.be.an.instanceof(Promise);
+
+    [
+    'then',
+      'onError',
+      'abort',
+      'pause',
+      'resume',
+      'done',
+      'fail',
+      'always',
+      'progress'
+    ].forEach(method => {
+      expect(runTask[method]).to.exist;
+      expect(typeof runTask[method]).to.equal('function');
+    })
+
+  });
 
   // it('it can send friendly messages', () => {
   //   var greeter = new Greeter()

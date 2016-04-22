@@ -14,14 +14,14 @@ export const EVENT_NAMES = mirror({
 }, 'event.');
 
 export const STATE_NAMES = mirror({
-  init: null,
+  init    : null,
+  error   : null,
+  running : null,
+  paused  : null,
   resolved: null,
   rejected: null,
-  error: null,
-  aborted: null,
-  running: null,
-  paused: null
-});
+  aborted : null
+}, 'state.');
 
 export const NEED_REPEAT_STATES = {
   [STATE_NAMES.running]: true,
