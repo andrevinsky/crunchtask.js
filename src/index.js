@@ -1,4 +1,6 @@
 /**
  * Created by andrew on 4/19/16.
  */
-export default from './types/crunchtask';
+import Crunchtask from './types/crunchtask';
+
+export default Crunchtask;

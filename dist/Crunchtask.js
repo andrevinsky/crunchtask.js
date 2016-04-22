@@ -139,7 +139,7 @@
     idle: null
   }, 'event.');
 
-  var STATE_NAMES$1 = mirror({
+  var STATE_NAMES = mirror({
     init: null,
     error: null,
     running: null,
@@ -149,11 +149,11 @@
     aborted: null
   }, 'state.');
 
-  var NEED_REPEAT_STATES = (_NEED_REPEAT_STATES = {}, _defineProperty(_NEED_REPEAT_STATES, STATE_NAMES$1.running, true), _defineProperty(_NEED_REPEAT_STATES, STATE_NAMES$1.paused, true), _NEED_REPEAT_STATES);
+  var NEED_REPEAT_STATES = (_NEED_REPEAT_STATES = {}, _defineProperty(_NEED_REPEAT_STATES, STATE_NAMES.running, true), _defineProperty(_NEED_REPEAT_STATES, STATE_NAMES.paused, true), _NEED_REPEAT_STATES);
 
-  var VERBOSE_STATES = (_VERBOSE_STATES = {}, _defineProperty(_VERBOSE_STATES, STATE_NAMES$1.resolved, 'success'), _defineProperty(_VERBOSE_STATES, STATE_NAMES$1.rejected, 'failure'), _defineProperty(_VERBOSE_STATES, STATE_NAMES$1.error, 'error'), _defineProperty(_VERBOSE_STATES, STATE_NAMES$1.aborted, 'aborted'), _VERBOSE_STATES);
+  var VERBOSE_STATES = (_VERBOSE_STATES = {}, _defineProperty(_VERBOSE_STATES, STATE_NAMES.resolved, 'success'), _defineProperty(_VERBOSE_STATES, STATE_NAMES.rejected, 'failure'), _defineProperty(_VERBOSE_STATES, STATE_NAMES.error, 'error'), _defineProperty(_VERBOSE_STATES, STATE_NAMES.aborted, 'aborted'), _VERBOSE_STATES);
 
-  var SETTLED_STATES = (_SETTLED_STATES = {}, _defineProperty(_SETTLED_STATES, STATE_NAMES$1.error, true), _defineProperty(_SETTLED_STATES, STATE_NAMES$1.resolved, true), _defineProperty(_SETTLED_STATES, STATE_NAMES$1.rejected, true), _defineProperty(_SETTLED_STATES, STATE_NAMES$1.aborted, true), _SETTLED_STATES);
+  var SETTLED_STATES = (_SETTLED_STATES = {}, _defineProperty(_SETTLED_STATES, STATE_NAMES.error, true), _defineProperty(_SETTLED_STATES, STATE_NAMES.resolved, true), _defineProperty(_SETTLED_STATES, STATE_NAMES.rejected, true), _defineProperty(_SETTLED_STATES, STATE_NAMES.aborted, true), _SETTLED_STATES);
 
   var uid = 0;
 
@@ -416,14 +416,14 @@
       signalError: signalError,
       goRunning: function goRunning() {
         thisTask.runCount++;
-        ctx.state = STATE_NAMES$1.running;
+        ctx.state = STATE_NAMES.running;
         taskEvents.trigger(EVENT_NAMES.run, ctx.id);
       },
       resolve: function resolve() {
         if (SETTLED_STATES[ctx.state]) {
           return;
         }
-        ctx.state = STATE_NAMES$1.resolved;
+        ctx.state = STATE_NAMES.resolved;
 
         for (var _len4 = arguments.length, args = Array(_len4), _key4 = 0; _key4 < _len4; _key4++) {
           args[_key4] = arguments[_key4];
@@ -439,7 +439,7 @@
         if (SETTLED_STATES[ctx.state]) {
           return;
         }
-        ctx.state = STATE_NAMES$1.rejected;
+        ctx.state = STATE_NAMES.rejected;
 
         for (var _len5 = arguments.length, args = Array(_len5), _key5 = 0; _key5 < _len5; _key5++) {
           args[_key5] = arguments[_key5];
@@ -455,21 +455,21 @@
         if (SETTLED_STATES[ctx.state]) {
           return;
         }
-        ctx.state = STATE_NAMES$1.aborted;
+        ctx.state = STATE_NAMES.aborted;
         return this;
       },
       pause: function pause() {
         if (SETTLED_STATES[ctx.state]) {
           return;
         }
-        ctx.state = STATE_NAMES$1.paused;
+        ctx.state = STATE_NAMES.paused;
         return this;
       },
       resume: function resume() {
         if (SETTLED_STATES[ctx.state]) {
           return;
         }
-        ctx.state = STATE_NAMES$1.running;
+        ctx.state = STATE_NAMES.running;
         return this;
       },
 
@@ -561,7 +561,7 @@
           miniRunCount = 0,
           timerElapsed = 0;
 
-      var canExecuteNextLoop = this.state === STATE_NAMES$1.running && !task.isPaused && !task.isAborted,
+      var canExecuteNextLoop = this.state === STATE_NAMES.running && !task.isPaused && !task.isAborted,
           canRepeatThisLoop,
           canQueueNextBatch;
 
@@ -587,9 +587,9 @@
           timerElapsed += new Date() - timerStart;
           miniRunCount++;
 
-          canRepeatThisLoop = needRepeat && timeLimit !== 0 && timerElapsed < timeLimit && this.state === STATE_NAMES$1.running;
+          canRepeatThisLoop = needRepeat && timeLimit !== 0 && timerElapsed < timeLimit && this.state === STATE_NAMES.running;
         } while (canRepeatThisLoop);
-      } else if (task.isAborted || this.state === STATE_NAMES$1.aborted) {
+      } else if (task.isAborted || this.state === STATE_NAMES.aborted) {
         instanceApi.reject('aborted');
       }
 
@@ -1021,7 +1021,7 @@
         parentTask: parentTask,
         id: 'T_' + thisTask.id + ':' + nextUid(),
         conditionsToMeet: 1,
-        state: STATE_NAMES$1.init,
+        state: STATE_NAMES.init,
         runBlock: 0,
         runArgs: args,
         descriptionFn: descriptionFn

@@ -138,7 +138,7 @@ export const makeRunInstanceApi = (ctx, taskEvents, promise, promiseControl) => 
       return;
     }
 
-    ctx.state = STATE_NAMES.error;
+    ctx.state = C.STATE_NAMES.error;
     ctx.value = args;
 
     signalGeneric(args, C.EVENT_NAMES.error, rejectSafe);
