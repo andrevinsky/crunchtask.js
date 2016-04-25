@@ -2,9 +2,7 @@
  * Created by andrew on 4/21/16.
  */
 import type from './type';
-
-const __slice = [].slice;
-
+import __slice from './slice';
 
 /**
  * Returns a partially applied function `fn` for optional `args`, with optional context of `ctx`

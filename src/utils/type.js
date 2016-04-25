@@ -1,9 +1,6 @@
 /**
  * Created by andrew on 4/21/16.
  */
-/**
- * Created by ANDREW on 6/2/2015.
- */
 
 /**
  *

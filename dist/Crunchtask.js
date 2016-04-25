@@ -332,13 +332,11 @@
     };
   }
 
-  var __slice$2 = [].slice;
-
   function together() {
-    var auxFns = __slice$2.call(arguments, 0);
+    var auxFns = __slice.call(arguments, 0);
 
     return function () {
-      var args = __slice$2.call(arguments, 0),
+      var args = __slice.call(arguments, 0),
           auxFn,
           fnsCopy = [].concat(auxFns);
 

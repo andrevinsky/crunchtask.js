@@ -57,7 +57,7 @@ function map(arr, fn) {
   return result;
 }
 
-function verbose(){
+function verbose() {
   return map(this.data, (v) => v.current);
 }
 

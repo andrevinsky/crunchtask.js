@@ -248,7 +248,7 @@ describe('Core', function () {
 
     it('implements a Collatz conjecture, aka 3n + 1 problem, algorithm', (done) => {
       collatzTask.onIdle(done);
-      collatzTask.onError(function(...args){
+      collatzTask.onError(function(...args) {
         console.log(args.join(''));
       });
       

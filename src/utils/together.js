@@ -2,8 +2,8 @@
  * Created by andrew on 4/21/16.
  */
 import type from './type';
+import __slice from './slice';
 
-const __slice = [].slice;
 /**
  *
  * @params {...function} fns

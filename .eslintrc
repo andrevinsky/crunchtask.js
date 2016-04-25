@@ -179,7 +179,7 @@ rules:
   #                                                                         #
   ###########################################################################
 
-  indent: [2, 2]                 # Set a specific tab width
+#  indent: [2, 2]                 # Set a specific tab width
   brace-style: 0                 # enforce one true brace style
   camelcase: 0                   # require camel case names
   comma-spacing: 2               # enforce spacing before and after comma
@@ -189,7 +189,7 @@ rules:
   func-names: 0                  # require function expressions to have a name
   func-style: 0                  # enforces use of function declarations or expressions
 #  key-spacing: 2                 # enforces spacing between keys and values in object literal properties
-  max-nested-callbacks: [2, 4]   # specify the maximum depth callbacks can be nested
+#  max-nested-callbacks: [2, 4]   # specify the maximum depth callbacks can be nested
   new-cap: 0                     # require a capital letter for constructors
   new-parens: 2                  # disallow the omission of parentheses when invoking a constructor with no arguments
   no-array-constructor: 2        # disallow use of the Array constructor
