@@ -73,12 +73,12 @@ class CrunchInstance extends CrunchInstancePromise {
 
 
 class CrunchExec {
-  constructor(descriptionFn) {
+  constructor(ctx, descriptionFn) {
     let result, events;
     try {
-      return (result = (...args) => new CrunchInstance(this, descriptionFn, events, args ));
+      return (result = (...args) => new CrunchInstance(ctx, descriptionFn, events, args ));
     } finally {
-      result.events = events = serveEvents(result);
+      ctx.events = events = serveEvents(result);
     }
   }
 }
@@ -86,6 +86,16 @@ class CrunchExec {
 
 class Crunchtask extends CrunchExec {
   constructor(descriptionFn) {
+
+    const ctx = {
+      id: nextUid(),
+      timestamp: new Date() - 0,
+      runCount: 0
+    };
+
+    super(ctx, descriptionFn);
+    const _this = this;
+
     const then = (...tasks) => {
       const doneHandler = (...args) => {
         let task;
@@ -99,19 +109,27 @@ class Crunchtask extends CrunchExec {
       }
       finally {
         newTask.done(doneHandler);
-        this.done(doneHandler);
+        _this.done(doneHandler);
       }
     };
 
-    super(descriptionFn);
+    let stack = null;
+    if (config.debug) {
+      try {
+        throw new Error();
+      } catch (ex) {
+        stack = ex.stack;
+      }
+    }
 
-    const events = this.events;
-    delete this.events;
+
+
+
+    const events = ctx.events;
+    delete ctx.events;
 
     Object.assign(this, {
-      id: nextUid(),
-      timestamp: new Date() - 0,
-      runCount: 0,
+
       then,
       onRun: partial(events.on, C.EVENT_NAMES.run),
       onIdle: partial(events.on, C.EVENT_NAMES.idle),
@@ -122,19 +140,23 @@ class Crunchtask extends CrunchExec {
         C.EVENT_NAMES.done, C.EVENT_NAMES.fail, C.EVENT_NAMES.error
       ].join()),
       progress: partial(events.on, C.EVENT_NAMES.progress),
-      isIdle: () => this.runCount === 0,
+      isIdle: () => ctx.runCount === 0,
       pause: () => {
-        this.isPaused = true;
-        return this;
+        ctx.isPaused = true;
+        return _this;
       },
       resume: () =>{
-        delete this.isPaused;
-        return this;
+        delete ctx.isPaused;
+        return _this;
       },
       abort: () => {
-        this.isAborted = true;
-        return this;
-      },
+        ctx.isAborted = true;
+        return _this;
+      }
+    });
+
+    Object.assign(ctx, {
+      stack,
       _signalIdle() {
         if (!globals.staticSecurityLock) {
           return;

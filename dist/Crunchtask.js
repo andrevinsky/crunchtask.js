@@ -619,7 +619,7 @@
         descriptionFn = ctx.descriptionFn;
 
     if (!descriptionFn) {
-      return instanceApi.signalError('CrunchTask.description.empty', 'Description function is empty.');
+      return instanceApi.signalError('CrunchTask.description.empty', 'Description function is empty. Ctx:' + JSON.stringify(ctx));
     }
 
     if (config.trace) {
@@ -646,13 +646,13 @@
       instanceApi.goRunning();
 
       if (config.trace) {
-        console.log('before defer', new Date() - 0);
+        console.log('before deferred Init + Body scheduler', new Date() - 0);
       }
 
       defer.call(ctx, 0, function () {
 
         if (config.trace) {
-          console.log('inside defer', new Date() - 0);
+          console.log('inside deferred Init + Body scheduler. With args:', new Date() - 0, this.runArgs.join());
         }
 
         if (this.initFn && !this.initFn.apply(this, this.runArgs)) {
@@ -1006,7 +1006,7 @@
 
       var promiseControl = null;
 
-      var _this = _possibleConstructorReturn(this, Object.getPrototypeOf(CrunchInstance).call(this, function (resolve, reject) {
+      var _this2 = _possibleConstructorReturn(this, Object.getPrototypeOf(CrunchInstance).call(this, function (resolve, reject) {
         promiseControl = {
           resolve: resolve,
           reject: reject
@@ -1027,33 +1027,31 @@
         descriptionFn: descriptionFn
       };
 
-      var instanceApi = makeRunInstanceApi(runCtx, taskEvents, _this, promiseControl);
+      var instanceApi = makeRunInstanceApi(runCtx, taskEvents, _this2, promiseControl);
 
-      Object.assign(_this, {
-        onError: partial(_this, instanceApi.runEventsOn, EVENT_NAMES.error),
+      Object.assign(_this2, {
+        onError: partial(_this2, instanceApi.runEventsOn, EVENT_NAMES.error),
 
-        abort: partial(_this, instanceApi.abort),
-        pause: partial(_this, instanceApi.pause),
-        resume: partial(_this, instanceApi.resume),
+        abort: partial(_this2, instanceApi.abort),
+        pause: partial(_this2, instanceApi.pause),
+        resume: partial(_this2, instanceApi.resume),
 
-        done: partial(_this, instanceApi.runEventsOn, EVENT_NAMES.done),
-        fail: partial(_this, instanceApi.runEventsOn, EVENT_NAMES.fail),
-        always: partial(_this, instanceApi.runEventsOn, [EVENT_NAMES.done, EVENT_NAMES.fail, EVENT_NAMES.error].join()),
+        done: partial(_this2, instanceApi.runEventsOn, EVENT_NAMES.done),
+        fail: partial(_this2, instanceApi.runEventsOn, EVENT_NAMES.fail),
+        always: partial(_this2, instanceApi.runEventsOn, [EVENT_NAMES.done, EVENT_NAMES.fail, EVENT_NAMES.error].join()),
 
-        progress: partial(_this, instanceApi.runEventsOn, EVENT_NAMES.progress)
+        progress: partial(_this2, instanceApi.runEventsOn, EVENT_NAMES.progress)
 
       });
 
       defer.call(runCtx, 0, processDescriptionFn, [instanceApi]);
-      return _this;
+      return _this2;
     }
 
     return CrunchInstance;
   }(CrunchInstancePromise);
 
-  var CrunchExec = function CrunchExec(descriptionFn) {
-    var _this2 = this;
-
+  var CrunchExec = function CrunchExec(ctx, descriptionFn) {
     _classCallCheck(this, CrunchExec);
 
     var result = void 0,
@@ -1064,10 +1062,10 @@
           args[_key11] = arguments[_key11];
         }
 
-        return new CrunchInstance(_this2, descriptionFn, events, args);
+        return new CrunchInstance(ctx, descriptionFn, events, args);
       };
     } finally {
-      result.events = events = serveEvents(result);
+      ctx.events = events = serveEvents(result);
     }
   };
 
@@ -1076,6 +1074,16 @@
 
     function Crunchtask(descriptionFn) {
       _classCallCheck(this, Crunchtask);
+
+      var ctx = {
+        id: nextUid(),
+        timestamp: new Date() - 0,
+        runCount: 0
+      };
+
+      var _this3 = _possibleConstructorReturn(this, Object.getPrototypeOf(Crunchtask).call(this, ctx, descriptionFn));
+
+      var _this = _this3;
 
       var then = function then() {
         for (var _len12 = arguments.length, tasks = Array(_len12), _key12 = 0; _key12 < _len12; _key12++) {
@@ -1097,19 +1105,24 @@
           newTask = new Crunchtask(descriptionFn);
         } finally {
           newTask.done(doneHandler);
-          _this3.done(doneHandler);
+          _this.done(doneHandler);
         }
       };
 
-      var _this3 = _possibleConstructorReturn(this, Object.getPrototypeOf(Crunchtask).call(this, descriptionFn));
+      var stack = null;
+      if (config.debug) {
+        try {
+          throw new Error();
+        } catch (ex) {
+          stack = ex.stack;
+        }
+      }
 
-      var events = _this3.events;
-      delete _this3.events;
+      var events = ctx.events;
+      delete ctx.events;
 
       Object.assign(_this3, {
-        id: nextUid(),
-        timestamp: new Date() - 0,
-        runCount: 0,
+
         then: then,
         onRun: partial(events.on, EVENT_NAMES.run),
         onIdle: partial(events.on, EVENT_NAMES.idle),
@@ -1119,20 +1132,24 @@
         always: partial(events.on, [EVENT_NAMES.done, EVENT_NAMES.fail, EVENT_NAMES.error].join()),
         progress: partial(events.on, EVENT_NAMES.progress),
         isIdle: function isIdle() {
-          return _this3.runCount === 0;
+          return ctx.runCount === 0;
         },
         pause: function pause() {
-          _this3.isPaused = true;
-          return _this3;
+          ctx.isPaused = true;
+          return _this;
         },
         resume: function resume() {
-          delete _this3.isPaused;
-          return _this3;
+          delete ctx.isPaused;
+          return _this;
         },
         abort: function abort() {
-          _this3.isAborted = true;
-          return _this3;
-        },
+          ctx.isAborted = true;
+          return _this;
+        }
+      });
+
+      Object.assign(ctx, {
+        stack: stack,
         _signalIdle: function _signalIdle() {
           if (!globals.staticSecurityLock) {
             return;

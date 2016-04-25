@@ -18,7 +18,7 @@ export function processDescriptionFn(instanceApi) {
     descriptionFn = ctx.descriptionFn;
 
   if (!descriptionFn) {
-    return instanceApi.signalError('CrunchTask.description.empty', 'Description function is empty.');
+    return instanceApi.signalError('CrunchTask.description.empty', 'Description function is empty. Ctx:' + JSON.stringify(ctx));
   }
 
   if (config.trace) {
@@ -51,14 +51,14 @@ export function processDescriptionFn(instanceApi) {
     instanceApi.goRunning();
 
     if (config.trace) {
-      console.log('before defer', new Date() - 0);
+      console.log('before deferred Init + Body scheduler', new Date() - 0);
     }
 
     // schedule init, body, fin, etc.
     defer.call(ctx, 0, function () {
 
       if (config.trace) {
-        console.log('inside defer', new Date() - 0);
+        console.log('inside deferred Init + Body scheduler. With args:', new Date() - 0, this.runArgs.join());
       }
 
       if (this.initFn && !this.initFn.apply(this, this.runArgs)) {
