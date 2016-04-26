@@ -179,7 +179,7 @@
     };
   }
 
-  var __slice = [].slice;
+  var __slice = Array.prototype.slice;
 
   function partial() {
     var ctx = this,
@@ -192,10 +192,7 @@
     }
 
     return function () {
-      for (var _len = arguments.length, args1 = Array(_len), _key = 0; _key < _len; _key++) {
-        args1[_key] = arguments[_key];
-      }
-
+      var args1 = __slice.call(arguments);
       return fn.apply(ctx, [].concat(args0, args1));
     };
   }
@@ -258,8 +255,8 @@
         evtName = void 0,
         handlers = void 0;
 
-    for (var _len2 = arguments.length, args = Array(_len2 > 3 ? _len2 - 3 : 0), _key2 = 3; _key2 < _len2; _key2++) {
-      args[_key2 - 3] = arguments[_key2];
+    for (var _len = arguments.length, args = Array(_len > 3 ? _len - 3 : 0), _key = 3; _key < _len; _key++) {
+      args[_key - 3] = arguments[_key];
     }
 
     while (evtName = evts.shift()) {
@@ -277,8 +274,8 @@
     }
     var handlers = hive[evt];
 
-    for (var _len3 = arguments.length, args1 = Array(_len3 > 2 ? _len3 - 2 : 0), _key3 = 2; _key3 < _len3; _key3++) {
-      args1[_key3 - 2] = arguments[_key3];
+    for (var _len2 = arguments.length, args1 = Array(_len2 > 2 ? _len2 - 2 : 0), _key2 = 2; _key2 < _len2; _key2++) {
+      args1[_key2 - 2] = arguments[_key2];
     }
 
     for (var handler, args0, _i = 0, _maxI = handlers.length; _i < _maxI; _i++) {
@@ -423,8 +420,8 @@
         }
         ctx.state = STATE_NAMES.resolved;
 
-        for (var _len4 = arguments.length, args = Array(_len4), _key4 = 0; _key4 < _len4; _key4++) {
-          args[_key4] = arguments[_key4];
+        for (var _len3 = arguments.length, args = Array(_len3), _key3 = 0; _key3 < _len3; _key3++) {
+          args[_key3] = arguments[_key3];
         }
 
         ctx.value = args;
@@ -439,8 +436,8 @@
         }
         ctx.state = STATE_NAMES.rejected;
 
-        for (var _len5 = arguments.length, args = Array(_len5), _key5 = 0; _key5 < _len5; _key5++) {
-          args[_key5] = arguments[_key5];
+        for (var _len4 = arguments.length, args = Array(_len4), _key4 = 0; _key4 < _len4; _key4++) {
+          args[_key4] = arguments[_key4];
         }
 
         ctx.value = args;
@@ -481,8 +478,8 @@
 
       ctx.state = STATE_NAMES.error;
 
-      for (var _len6 = arguments.length, args = Array(_len6), _key6 = 0; _key6 < _len6; _key6++) {
-        args[_key6] = arguments[_key6];
+      for (var _len5 = arguments.length, args = Array(_len5), _key5 = 0; _key5 < _len5; _key5++) {
+        args[_key5] = arguments[_key5];
       }
 
       ctx.value = args;
@@ -678,8 +675,8 @@
     function Range() {
       _classCallCheck(this, Range);
 
-      for (var _len7 = arguments.length, args = Array(_len7), _key7 = 0; _key7 < _len7; _key7++) {
-        args[_key7] = arguments[_key7];
+      for (var _len6 = arguments.length, args = Array(_len6), _key6 = 0; _key6 < _len6; _key6++) {
+        args[_key6] = arguments[_key6];
       }
 
       if (args.length > 1 || !result.isArray(args[0])) {
@@ -830,8 +827,8 @@
   };
 
   function staticFor() {
-    for (var _len8 = arguments.length, n_args = Array(_len8), _key8 = 0; _key8 < _len8; _key8++) {
-      n_args[_key8] = arguments[_key8];
+    for (var _len7 = arguments.length, n_args = Array(_len7), _key7 = 0; _key7 < _len7; _key7++) {
+      n_args[_key7] = arguments[_key7];
     }
 
     var argsCount = n_args.length;
@@ -873,8 +870,8 @@
       var canRunCycle = void 0;
 
       init(function () {
-        for (var _len9 = arguments.length, args = Array(_len9), _key9 = 0; _key9 < _len9; _key9++) {
-          args[_key9] = arguments[_key9];
+        for (var _len8 = arguments.length, args = Array(_len8), _key8 = 0; _key8 < _len8; _key8++) {
+          args[_key8] = arguments[_key8];
         }
 
         if (args.length) {
@@ -938,8 +935,8 @@
   };
 
   function normalizeRanges() {
-    for (var _len10 = arguments.length, args = Array(_len10), _key10 = 0; _key10 < _len10; _key10++) {
-      args[_key10] = arguments[_key10];
+    for (var _len9 = arguments.length, args = Array(_len9), _key9 = 0; _key9 < _len9; _key9++) {
+      args[_key9] = arguments[_key9];
     }
 
     return new Range(args);
@@ -1056,8 +1053,8 @@
         events = void 0;
     try {
       return result = function result() {
-        for (var _len11 = arguments.length, args = Array(_len11), _key11 = 0; _key11 < _len11; _key11++) {
-          args[_key11] = arguments[_key11];
+        for (var _len10 = arguments.length, args = Array(_len10), _key10 = 0; _key10 < _len10; _key10++) {
+          args[_key10] = arguments[_key10];
         }
 
         return new CrunchInstance(ctx, descriptionFn, events, args);
@@ -1084,13 +1081,13 @@
       var _this = _this3;
 
       var then = function then() {
-        for (var _len12 = arguments.length, tasks = Array(_len12), _key12 = 0; _key12 < _len12; _key12++) {
-          tasks[_key12] = arguments[_key12];
+        for (var _len11 = arguments.length, tasks = Array(_len11), _key11 = 0; _key11 < _len11; _key11++) {
+          tasks[_key11] = arguments[_key11];
         }
 
         var doneHandler = function doneHandler() {
-          for (var _len13 = arguments.length, args = Array(_len13), _key13 = 0; _key13 < _len13; _key13++) {
-            args[_key13] = arguments[_key13];
+          for (var _len12 = arguments.length, args = Array(_len12), _key12 = 0; _key12 < _len12; _key12++) {
+            args[_key12] = arguments[_key12];
           }
 
           var task = void 0;

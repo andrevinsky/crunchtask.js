@@ -106,7 +106,6 @@ describe('Core', function () {
     });
   });
 
-
   describe('Crunchtask instance methods', () => {
 
     let task;
@@ -192,8 +191,115 @@ describe('Core', function () {
       });
     });
 
-    it('', () => {});
+  });
 
+  describe('Define a task.', () => {
+
+    it('Pass a single function, aka _description function_, to the constructor.', (done) => {
+      const descriptionFn = (init, body, fin) => {
+        init(() => {});
+        body((rs) => { rs(); });
+        fin(() => {});
+      };
+      const generator = () => new Crunchtask(descriptionFn);
+
+      const task = generator();
+
+      const onErrorSpy = chai.spy(function () {
+        assert(true).to.equal(false);
+        done();
+      });
+
+      expect(onErrorSpy).to.be.spy;
+
+      task.onError(onErrorSpy);
+      task.done(done);
+
+      task();
+
+      //
+      //
+      expect(onErrorSpy).to.have.not.been.called.with('CrunchTask.description.empty');
+
+    });
+
+    it('Failure to do so causes error when the instance gets executed. The error is generated on a new stack.', (done) => {
+
+      const generator = () => new Crunchtask();
+      const task = generator();
+
+      const onErrorSpy = chai.spy(function () {
+      });
+
+      expect(onErrorSpy).to.be.spy;
+
+      task.onError(onErrorSpy);
+
+      setTimeout(function() {
+        expect(onErrorSpy).to.have.been.called.with('CrunchTask.description.empty');
+        done();
+      }, 10);
+
+      task();
+
+      expect(onErrorSpy).to.have.not.been.called.with('CrunchTask.description.empty');
+
+    });
+
+    it('It (the function) describes the task\'s initialization, body, and finalization.', (done) => {
+      const descriptionFn = (init, body, fin) => {
+        let localVar, i;
+        init((actualVal) => { localVar = actualVal; i = 10; });
+        body((rs) => {
+          if (i--) {
+            localVar += localVar;
+          } else {
+            rs(localVar);
+          }
+        });
+        fin(() => {});
+      };
+      const generator = () => new Crunchtask(descriptionFn);
+      const task = generator();
+
+      const runInstance = task(1);
+
+      runInstance.then(([arg1]) => {
+        expect(arg1).to.exist;
+        expect(arg1).to.equal(1024);
+        done();
+      });
+    });
+
+    it('It (the function) gets executed only when the task is run and on the same stack.', (done) => {
+      const descriptionFn = (init, body, fin) => {
+        init(() => {});
+        body((rs) => { rs(); });
+        fin(() => {});
+      };
+      const descriptionFnSpy = chai.spy(descriptionFn);
+
+      const generator = () => new Crunchtask(descriptionFnSpy);
+
+      const task = generator();
+
+      expect(descriptionFnSpy).to.be.spy;
+
+      expect(descriptionFnSpy).to.not.have.been.called();
+
+      task();
+
+      expect(descriptionFnSpy).to.have.been.called();
+
+      setTimeout(function() {
+        expect(descriptionFnSpy).to.have.been.called();
+        done();
+      }, 10);
+
+
+    });
+
+    it('', () => {});
 
   });
 
@@ -287,6 +393,5 @@ describe('Core', function () {
     // it('', () => {});
 
   });
-
 
 });

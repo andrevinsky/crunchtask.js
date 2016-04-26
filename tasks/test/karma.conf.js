@@ -29,6 +29,7 @@ module.exports = function(config) {
       'node_modules/chai/chai.js',
       'node_modules/sinon/pkg/sinon.js',
       'node_modules/sinon-chai/lib/sinon-chai.js',
+      'node_modules/chai-spies/chai-spies.js',
       'node_modules/babel-polyfill/dist/polyfill.js',
       `dist/${process.env.LIBRARY_NAME}.js`,
       'test/specs/*.js',

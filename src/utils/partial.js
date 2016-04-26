@@ -22,7 +22,8 @@ export default function partial(/*{ctx}, fn, args..*/) {
     fn = args0.shift();
   }
 
-  return function (...args1) {
+  return function () {
+    const args1 = __slice.call(arguments);
     return fn.apply(ctx, [].concat(args0, args1));
   };
 }
