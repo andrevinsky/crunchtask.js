@@ -1,10 +1,7 @@
 /**
  * Created by andrew on 4/22/16.
  */
-import type from '../utils/type';
 import safe from '../utils/safe';
-import together from '../utils/together';
-import partial from '../utils/partial';
 import defer from '../utils/defer';
 
 import { config } from './config';

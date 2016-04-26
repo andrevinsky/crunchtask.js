@@ -5,6 +5,12 @@
 /* global Crunchtask */
 describe('Core', function () {
 
+  const defaultDescriptionFn = (init, body, fin) => {
+    init(() => {});
+    body(() => {});
+    fin(() => {});
+  };
+
   it('Crunchtask exists', () => expect(Crunchtask).is.not.undefined);
 
   describe('Crunchtask has convenience static methods', () => {
@@ -121,7 +127,7 @@ describe('Core', function () {
     ];
 
     beforeEach(() => {
-      const generator = () => new Crunchtask();
+      const generator = () => new Crunchtask(defaultDescriptionFn);
       expect(generator).to.not.throw(Error);
 
       task = generator();
@@ -170,7 +176,7 @@ describe('Core', function () {
     let runTask;
 
     beforeEach(() => {
-      const generator = () => (new Crunchtask())();
+      const generator = () => (new Crunchtask(defaultDescriptionFn))();
       runTask = generator();
     });
 
@@ -200,7 +206,7 @@ describe('Core', function () {
         debug: true
       });
 
-      const descriptionFn = ((init, body, fin) => {
+      collatzTask = new Crunchtask(((init, body, fin) => {
         let nInit = null,
           n  = null,
           threshold = null,
@@ -231,9 +237,7 @@ describe('Core', function () {
             console.log(`Collatz conjecture breaking candidate: ${nInit}`)
           }
         });
-      });
-      
-      collatzTask = new Crunchtask(descriptionFn);
+      }));
 
     });
 
@@ -246,7 +250,7 @@ describe('Core', function () {
       Crunchtask.config();
     });
 
-    it('implements a Collatz conjecture, aka 3n + 1 problem, algorithm', (done) => {
+    it('Collatz conjecture, aka 3n + 1 problem, algorithm', (done) => {
       collatzTask.onIdle(done);
       collatzTask.onError(function(...args) {
         console.log(args.join(''));
