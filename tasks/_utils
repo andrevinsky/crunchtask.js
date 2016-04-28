@@ -64,7 +64,8 @@ var spawn = require('child_process').spawn,
 
         // extend the env variables with some other custom options
         utils.extend(process.env, envVariables)
-        utils.print(`Executing: ${command}  ${args.join(' ')} \n`, 'confirm')
+        // utils.print(`Executing: ${command}  ${args.join(' ')} \n`, 'confirm')
+        utils.print(['Executing: ', command, ' ', args.join(' '), ' \n'].join(''), 'confirm')
 
         var cmd = spawn(path.normalize(command), args, {
           stdio: 'inherit',
