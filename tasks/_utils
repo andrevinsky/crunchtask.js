@@ -21,7 +21,7 @@ var spawn = require('child_process').spawn,
      * @param   { Boolean } hasEquals - set the options commands using the equal
      * @returns { Array } - options array
      */
-    optionsToArray(obj, optionsPrefix, hasEquals) {
+    optionsToArray: function (obj, optionsPrefix, hasEquals) {
       optionsPrefix = optionsPrefix || '--'
       var ret = []
       Object.keys(obj).forEach((key) => {
@@ -38,7 +38,7 @@ var spawn = require('child_process').spawn,
      * @param   { Object } obj2 - source
      * @returns { Object } - destination object
      */
-    extend(obj1, obj2) {
+    extend: function(obj1, obj2) {
       for (var i in obj2) {
         if (obj2.hasOwnProperty(i)) {
           obj1[i] = obj2[i]
@@ -53,7 +53,7 @@ var spawn = require('child_process').spawn,
      * @param  { Object } envVariables - command environment variables
      * @returns { Promise } chainable promise object
      */
-    exec(command, args, envVariables) {
+    exec: function(command, args, envVariables) {
 
       var path = require('path'),
         os = require('os')
@@ -88,7 +88,7 @@ var spawn = require('child_process').spawn,
      * @param  { bool } mustDelete delete the files found
      * @returns { Array } files path list
      */
-    listFiles(path, mustDelete) {
+    listFiles: function (path, mustDelete) {
       utils.print(`Listing all the files in the folder: ${path}`, 'confirm')
       var files = []
       if (fs.existsSync(path)) {
@@ -113,7 +113,7 @@ var spawn = require('child_process').spawn,
      * Delete synchronously any folder or file
      * @param  { String } path - path to clean
      */
-    clean(path) {
+    clean: function(path) {
       var files = utils.listFiles(path, true)
       utils.print(`Deleting the following files: \n ${files.join('\n')}`, 'cool')
     },
@@ -122,7 +122,7 @@ var spawn = require('child_process').spawn,
      * @param  { String } msg - message to output
      * @param  { String } type - message type to handle the right color
      */
-    print(msg, type) {
+    print: function(msg, type) {
       var color
       switch (type) {
         case 'error':
@@ -144,4 +144,4 @@ var spawn = require('child_process').spawn,
     }
   }
 
-module.exports = utils
+module.exports = utils;

@@ -4,9 +4,3 @@ languages:
 exclude_paths:
 - "dest/crunchtask.js"
 - "dest/crunchtask.min.js"
-- "build/crunchtask.js"
-- "build/crunchtask.min.js"
-- "dst/crunchtask.js"
-- "dst/crunchtask.min.js"
-- "karma.conf.js"
-- "Gruntfile.js"

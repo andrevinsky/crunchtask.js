@@ -8,7 +8,7 @@ before_script:
   - 'sh -e /etc/init.d/xvfb start'
 #  - npm install -g bower
 #  - npm install -g chrome firefox karma@canary phantomjs karma-phantomjs-launcher karma-firefox-launcher jasmine-node@2.0.0
-  - npm install -g chrome firefox karma@canary phantomjs karma-phantomjs-launcher karma-firefox-launcher
+#  - npm install -g chrome firefox karma@canary phantomjs karma-phantomjs-launcher karma-firefox-launcher
 #  - npm install -g harp
   - npm install
 #  - bower install
