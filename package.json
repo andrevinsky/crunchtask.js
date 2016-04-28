@@ -63,6 +63,5 @@
     "uglify-js": "^2.6.2"
   },
   "dependencies": {
-    "mirror": "^0.3.3"
   }
 }
