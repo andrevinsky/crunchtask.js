@@ -90,11 +90,12 @@ var spawn = require('child_process').spawn,
      * @returns { Array } files path list
      */
     listFiles: function (path, mustDelete) {
-      utils.print(`Listing all the files in the folder: ${path}`, 'confirm')
+      // utils.print(`Listing all the files in the folder: ${path}`, 'confirm')
+      utils.print(['Listing all the files in the folder: ', path].join(''), 'confirm')
       var files = []
       if (fs.existsSync(path)) {
         var tmpFiles = fs.readdirSync(path)
-        tmpFiles.forEach((file) => {
+        tmpFiles.forEach(function(file) {
           var curPath = path + '/' + file
           files.push(curPath)
           if (fs.lstatSync(curPath).isDirectory()) { // recurse
@@ -116,7 +117,8 @@ var spawn = require('child_process').spawn,
      */
     clean: function(path) {
       var files = utils.listFiles(path, true)
-      utils.print(`Deleting the following files: \n ${files.join('\n')}`, 'cool')
+      // utils.print(`Deleting the following files: \n ${files.join('\n')}`, 'cool')
+      utils.print(['Deleting the following files: \n ', files.join('\n')].join(''), 'cool')
     },
     /**
      * Log messages in the terminal using custom colors
@@ -141,7 +143,8 @@ var spawn = require('child_process').spawn,
         default:
           color = ''
       }
-      console.log(`${color} ${msg} \x1B[39m`)
+      // console.log(`${color} ${msg} \x1B[39m`)
+      console.log([color, ' ', msg, ' \x1B[39m'].join(''))
     }
   }
 
