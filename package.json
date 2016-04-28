@@ -1,10 +1,9 @@
 {
-  "name": "crunchtask",
+  "name": "Crunch",
   "version": "1.0.0",
-  "description": "A library that executes long-running tasks without freezing of a machine and employs an easy usage pattern ",
-  "main": "dst/crunchtask.js",
+  "description": "A library that executes long-running tasks without freezing a machine and employing an easy-to-use pattern",
+  "main": "dist/crunch.js",
   "scripts": {
-    "preinstall": "",
     "test": "node make test",
     "serve": "node make serve",
     "eslint": "node make eslint",
@@ -21,6 +20,8 @@
   },
   "keywords": [
     "crunch",
+    "crunch tasks",
+    "parallel tasks",
     "task",
     "crunchtask"
   ],
@@ -58,6 +59,7 @@
     "serve": "^1.4.0",
     "sinon": "^1.17.3",
     "sinon-chai": "^2.8.0",
+    "source-map": "^0.5.5",
     "uglify-js": "^2.6.2"
   },
   "dependencies": {

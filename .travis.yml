@@ -1,17 +1,18 @@
 # http://docs.travis-ci.com/user/customizing-the-build/
 language: node_js
 node_js:
-  - 0.10
+  - 4.2.3
 before_script:
   - 'export CHROME_BIN=chromium-browser'
   - 'export DISPLAY=:99.0'
   - 'sh -e /etc/init.d/xvfb start'
-  - npm install -g bower
-  - npm install -g chrome firefox karma@canary phantomjs karma-phantomjs-launcher karma-firefox-launcher jasmine-node@2.0.0
+#  - npm install -g bower
+#  - npm install -g chrome firefox karma@canary phantomjs karma-phantomjs-launcher karma-firefox-launcher jasmine-node@2.0.0
+  - npm install -g chrome firefox karma@canary phantomjs karma-phantomjs-launcher karma-firefox-launcher
 #  - npm install -g harp
   - npm install
-  - bower install
+#  - bower install
 script:
-  - grunt test
+  - npm run
 #  - jasmine-node --forceExit --coffee test/unit/step01CrunchtaskSpec.coffee test/unit/step02DeclarationInstantiationSpec.coffee test/unit/step03GeneralApiSpec.coffee test/unit/step04ChainabilityApiSpec.coffee test/unit/step06CrunchtaskEventsSpec.coffee test/unit/step05ConvenienceForMethodSpec.coffee
 

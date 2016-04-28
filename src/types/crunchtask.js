@@ -6,12 +6,12 @@ import nextUid from '../utils/nextUid';
 import type from '../utils/type';
 // import together from './utils/together';
 import partial from '../utils/partial';
-import globals from '../utils/globals';
+import globals from '../essentials/globals';
 import defer from '../utils/defer';
 
 
 import { getExecutableFor } from '../essentials/executables';
-import { serveEvents } from '../essentials/events';
+import { bindEventServer } from '../essentials/events';
 import { config, defaultConfig } from '../essentials/config';
 import { makeRunInstanceApi } from '../essentials/runInstanceApi';
 import { processDescriptionFn } from '../essentials/processDescriptionFn';
@@ -78,13 +78,13 @@ class CrunchExec {
     try {
       return (result = (...args) => new CrunchInstance(ctx, descriptionFn, events, args ));
     } finally {
-      ctx.events = events = serveEvents(result);
+      ctx.events = events = bindEventServer(result);
     }
   }
 }
 
 
-class Crunchtask extends CrunchExec {
+class Crunch extends CrunchExec {
   constructor(descriptionFn) {
 
     const ctx = {
@@ -105,7 +105,7 @@ class Crunchtask extends CrunchExec {
       };
       let newTask;
       try {
-        newTask = new Crunchtask(descriptionFn);
+        newTask = new Crunch(descriptionFn);
       }
       finally {
         newTask.done(doneHandler);
@@ -168,7 +168,7 @@ class Crunchtask extends CrunchExec {
   }
 }
 
-Object.assign(Crunchtask, {
+Object.assign(Crunch, {
   /**
    * @deprecated use range
    * @type {staticFor}
@@ -216,12 +216,12 @@ Object.assign(Crunchtask, {
 
 Object.assign(type, {
   isBuddy(input) {
-    return input instanceof Crunchtask;
+    return input instanceof Crunch;
   },
   getTaskType() {
-    return Crunchtask;
+    return Crunch;
   }
 
 });
 
-export default Crunchtask;
+export default Crunch;

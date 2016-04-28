@@ -3,6 +3,12 @@
  */
 import type from './type';
 
+export class AppError extends Error {
+  constructor(errType, msg) {
+    super(`CT_${errType}. Message: ${msg}`);
+  }
+}
+
 /**
  *
  * @throws Error
@@ -14,5 +20,5 @@ export default function error(errType, msg) {
     msg = errType;
     errType = 'Generic';
   }
-  throw new Error(['`CT_', errType, '`. Message: ', msg].join(''));
+  throw new AppError(errType, msg);
 }

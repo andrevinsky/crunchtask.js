@@ -1,6 +1,6 @@
 (function (global, factory) {
   if (typeof define === "function" && define.amd) {
-    define('Crunchtask', ['module'], factory);
+    define('Crunch', ['module'], factory);
   } else if (typeof exports !== "undefined") {
     factory(module);
   } else {
@@ -8,34 +8,10 @@
       exports: {}
     };
     factory(mod);
-    global.Crunchtask = mod.exports;
+    global.Crunch = mod.exports;
   }
 })(this, function (module) {
   'use strict';
-
-  function _possibleConstructorReturn(self, call) {
-    if (!self) {
-      throw new ReferenceError("this hasn't been initialised - super() hasn't been called");
-    }
-
-    return call && (typeof call === "object" || typeof call === "function") ? call : self;
-  }
-
-  function _inherits(subClass, superClass) {
-    if (typeof superClass !== "function" && superClass !== null) {
-      throw new TypeError("Super expression must either be null or a function, not " + typeof superClass);
-    }
-
-    subClass.prototype = Object.create(superClass && superClass.prototype, {
-      constructor: {
-        value: subClass,
-        enumerable: false,
-        writable: true,
-        configurable: true
-      }
-    });
-    if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass;
-  }
 
   var _slicedToArray = function () {
     function sliceIterator(arr, i) {
@@ -75,12 +51,6 @@
     };
   }();
 
-  function _classCallCheck(instance, Constructor) {
-    if (!(instance instanceof Constructor)) {
-      throw new TypeError("Cannot call a class as a function");
-    }
-  }
-
   var _createClass = function () {
     function defineProperties(target, props) {
       for (var i = 0; i < props.length; i++) {
@@ -98,6 +68,36 @@
       return Constructor;
     };
   }();
+
+  function _classCallCheck(instance, Constructor) {
+    if (!(instance instanceof Constructor)) {
+      throw new TypeError("Cannot call a class as a function");
+    }
+  }
+
+  function _possibleConstructorReturn(self, call) {
+    if (!self) {
+      throw new ReferenceError("this hasn't been initialised - super() hasn't been called");
+    }
+
+    return call && (typeof call === "object" || typeof call === "function") ? call : self;
+  }
+
+  function _inherits(subClass, superClass) {
+    if (typeof superClass !== "function" && superClass !== null) {
+      throw new TypeError("Super expression must either be null or a function, not " + typeof superClass);
+    }
+
+    subClass.prototype = Object.create(superClass && superClass.prototype, {
+      constructor: {
+        value: subClass,
+        enumerable: false,
+        writable: true,
+        configurable: true
+      }
+    });
+    if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass;
+  }
 
   var _NEED_REPEAT_STATES, _VERBOSE_STATES, _SETTLED_STATES;
 
@@ -216,7 +216,7 @@
       return function (args) {
         return task.apply(ctx || this, args);
       };
-    } else if (dynamic.isBuddy(task)) {
+    } else if (result.isBuddy(task)) {
       return function (args) {
         globals.staticParentTask = ctx;
         return task.run.apply(task, args);
@@ -294,7 +294,7 @@
     }
   }
 
-  function serveEvents(ctx) {
+  function bindEventServer(ctx) {
     var obj = arguments.length <= 1 || arguments[1] === undefined ? {} : arguments[1];
 
     return {
@@ -348,7 +348,7 @@
     var parentTask = ctx.parentTask;
     var resolveSafe = safe(promiseControl.resolve);
     var rejectSafe = safe(promiseControl.reject);
-    var runEvents = serveEvents(promise);
+    var runEvents = bindEventServer(promise);
     var triggerBoth = together(runEvents.trigger, taskEvents.trigger);
 
     if (parentTask) {
@@ -364,7 +364,7 @@
           return;
         }
         if (!result.isUndefined(_initFn) && !result.isFunction(_initFn)) {
-          return signalError('Crunchtask.description.initSetup', 'Init setup expects an optional parameter of type function only.');
+          return signalError('Crunch.description.initSetup', 'Init setup expects an optional parameter of type function only.');
         }
         ctx.initFn = safe(thisTask, _initFn);
       },
@@ -663,12 +663,24 @@
     }
   }
 
+  var AppError = function (_Error) {
+    _inherits(AppError, _Error);
+
+    function AppError(errType, msg) {
+      _classCallCheck(this, AppError);
+
+      return _possibleConstructorReturn(this, Object.getPrototypeOf(AppError).call(this, 'CT_' + errType + '. Message: ' + msg));
+    }
+
+    return AppError;
+  }(Error);
+
   function error(errType, msg) {
     if (result.isUndefined(msg)) {
       msg = errType;
       errType = 'Generic';
     }
-    throw new Error(['`CT_', errType, '`. Message: ', msg].join(''));
+    throw new AppError(errType, msg);
   }
 
   var Range = function () {
@@ -1001,7 +1013,7 @@
 
       var promiseControl = null;
 
-      var _this2 = _possibleConstructorReturn(this, Object.getPrototypeOf(CrunchInstance).call(this, function (resolve, reject) {
+      var _this3 = _possibleConstructorReturn(this, Object.getPrototypeOf(CrunchInstance).call(this, function (resolve, reject) {
         promiseControl = {
           resolve: resolve,
           reject: reject
@@ -1022,25 +1034,25 @@
         descriptionFn: descriptionFn
       };
 
-      var instanceApi = makeRunInstanceApi(runCtx, taskEvents, _this2, promiseControl);
+      var instanceApi = makeRunInstanceApi(runCtx, taskEvents, _this3, promiseControl);
 
-      Object.assign(_this2, {
-        onError: partial(_this2, instanceApi.runEventsOn, EVENT_NAMES.error),
+      Object.assign(_this3, {
+        onError: partial(_this3, instanceApi.runEventsOn, EVENT_NAMES.error),
 
-        abort: partial(_this2, instanceApi.abort),
-        pause: partial(_this2, instanceApi.pause),
-        resume: partial(_this2, instanceApi.resume),
+        abort: partial(_this3, instanceApi.abort),
+        pause: partial(_this3, instanceApi.pause),
+        resume: partial(_this3, instanceApi.resume),
 
-        done: partial(_this2, instanceApi.runEventsOn, EVENT_NAMES.done),
-        fail: partial(_this2, instanceApi.runEventsOn, EVENT_NAMES.fail),
-        always: partial(_this2, instanceApi.runEventsOn, [EVENT_NAMES.done, EVENT_NAMES.fail, EVENT_NAMES.error].join()),
+        done: partial(_this3, instanceApi.runEventsOn, EVENT_NAMES.done),
+        fail: partial(_this3, instanceApi.runEventsOn, EVENT_NAMES.fail),
+        always: partial(_this3, instanceApi.runEventsOn, [EVENT_NAMES.done, EVENT_NAMES.fail, EVENT_NAMES.error].join()),
 
-        progress: partial(_this2, instanceApi.runEventsOn, EVENT_NAMES.progress)
+        progress: partial(_this3, instanceApi.runEventsOn, EVENT_NAMES.progress)
 
       });
 
       defer.call(runCtx, 0, processDescriptionFn, [instanceApi]);
-      return _this2;
+      return _this3;
     }
 
     return CrunchInstance;
@@ -1060,15 +1072,15 @@
         return new CrunchInstance(ctx, descriptionFn, events, args);
       };
     } finally {
-      ctx.events = events = serveEvents(result);
+      ctx.events = events = bindEventServer(result);
     }
   };
 
-  var Crunchtask = function (_CrunchExec) {
-    _inherits(Crunchtask, _CrunchExec);
+  var Crunch = function (_CrunchExec) {
+    _inherits(Crunch, _CrunchExec);
 
-    function Crunchtask(descriptionFn) {
-      _classCallCheck(this, Crunchtask);
+    function Crunch(descriptionFn) {
+      _classCallCheck(this, Crunch);
 
       var ctx = {
         id: nextUid(),
@@ -1076,9 +1088,9 @@
         runCount: 0
       };
 
-      var _this3 = _possibleConstructorReturn(this, Object.getPrototypeOf(Crunchtask).call(this, ctx, descriptionFn));
+      var _this4 = _possibleConstructorReturn(this, Object.getPrototypeOf(Crunch).call(this, ctx, descriptionFn));
 
-      var _this = _this3;
+      var _this = _this4;
 
       var then = function then() {
         for (var _len11 = arguments.length, tasks = Array(_len11), _key11 = 0; _key11 < _len11; _key11++) {
@@ -1097,7 +1109,7 @@
         };
         var newTask = void 0;
         try {
-          newTask = new Crunchtask(descriptionFn);
+          newTask = new Crunch(descriptionFn);
         } finally {
           newTask.done(doneHandler);
           _this.done(doneHandler);
@@ -1116,7 +1128,7 @@
       var events = ctx.events;
       delete ctx.events;
 
-      Object.assign(_this3, {
+      Object.assign(_this4, {
 
         then: then,
         onRun: partial(events.on, EVENT_NAMES.run),
@@ -1153,13 +1165,13 @@
           events.trigger(EVENT_NAMES.idle);
         }
       });
-      return _this3;
+      return _this4;
     }
 
-    return Crunchtask;
+    return Crunch;
   }(CrunchExec);
 
-  Object.assign(Crunchtask, {
+  Object.assign(Crunch, {
     'for': staticFor,
     range: staticFor,
     rangeCheck: normalizeRanges,
@@ -1194,12 +1206,12 @@
 
   Object.assign(result, {
     isBuddy: function isBuddy(input) {
-      return input instanceof Crunchtask;
+      return input instanceof Crunch;
     },
     getTaskType: function getTaskType() {
-      return Crunchtask;
+      return Crunch;
     }
   });
 
-  module.exports = Crunchtask;
+  module.exports = Crunch;
 });

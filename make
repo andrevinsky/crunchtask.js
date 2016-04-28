@@ -2,7 +2,7 @@
 
 'use strict'
 
-global.library = 'Crunchtask'
+global.library = 'Crunch';
 
 var command = process.argv[2],
     utils   = require('./tasks/_utils'),
@@ -11,7 +11,7 @@ var command = process.argv[2],
     minify  = require('./tasks/minify'),
     build   = require('./tasks/build'),
     watch   = require('./tasks/watch'),
-    serve   = require('./tasks/serve')
+    serve   = require('./tasks/serve');
 
 /**
  * Each task required (except watch) returns a promise so you will be able to chain them as you prefer

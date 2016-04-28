@@ -6,10 +6,9 @@ import safe from '../utils/safe';
 import together from '../utils/together';
 import partial from '../utils/partial';
 import defer from '../utils/defer';
+import globals from './globals'; 
 
-import globals from '../utils/globals';  // TODO: move into essentials
-
-import { serveEvents } from './events';
+import { bindEventServer } from './events';
 import { config } from './config';
 
 import * as C from '../constants/index';
@@ -20,7 +19,7 @@ export const makeRunInstanceApi = (ctx, taskEvents, promise, promiseControl) => 
     { parentTask } = ctx,
     resolveSafe = safe(promiseControl.resolve),
     rejectSafe = safe(promiseControl.reject),
-    runEvents = serveEvents(promise),
+    runEvents = bindEventServer(promise),
     triggerBoth = together(runEvents.trigger, taskEvents.trigger);
   
   if (parentTask) {
@@ -36,7 +35,7 @@ export const makeRunInstanceApi = (ctx, taskEvents, promise, promiseControl) => 
         return;
       }
       if (!type.isUndefined(_initFn) && !type.isFunction(_initFn)) {
-        return signalError('Crunchtask.description.initSetup', 'Init setup expects an optional parameter of type function only.');
+        return signalError('Crunch.description.initSetup', 'Init setup expects an optional parameter of type function only.');
       }
       ctx.initFn = safe(thisTask, _initFn);
     },

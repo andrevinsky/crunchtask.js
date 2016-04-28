@@ -65,7 +65,7 @@ function _trigger(hive, evt, ...args1) {
  * @param _obj {{}}
  * @returns {{on: {Function}, trigger: {Function}}}
  */
-export function serveEvents(ctx, obj = {}) { // TODO: rename to bindEventServer
+export function bindEventServer(ctx, obj = {}) {
   return {
     on     : _on.bind(ctx, obj),
     trigger: _trigger.bind(ctx, obj)

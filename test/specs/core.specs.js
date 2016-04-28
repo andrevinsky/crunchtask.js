@@ -2,7 +2,7 @@
  * Created by andrew on 4/19/16.
  */
 
-/* global Crunchtask */
+/* global Crunch */
 describe('Core', function () {
 
   const defaultDescriptionFn = (init, body, fin) => {
@@ -11,9 +11,9 @@ describe('Core', function () {
     fin(() => {});
   };
 
-  it('Crunchtask exists', () => expect(Crunchtask).is.not.undefined);
+  it('Crunch exists', () => expect(Crunch).is.not.undefined);
 
-  describe('Crunchtask has convenience static methods', () => {
+  describe('Crunch has convenience static methods', () => {
 
     const methods = [
       'for',
@@ -28,8 +28,8 @@ describe('Core', function () {
     it('Inventory: ' + methods.join(), () => {
 
       methods.forEach(method => {
-        expect(Crunchtask[method], `Method exists: ${method}`).to.exist;
-        expect(typeof Crunchtask[method]).to.equal('function');
+        expect(Crunch[method], `Method exists: ${method}`).to.exist;
+        expect(typeof Crunch[method]).to.equal('function');
       })
     });
 
@@ -45,7 +45,7 @@ describe('Core', function () {
 
       describe('`rangeCheck()` method returns an instance of Range class which has methods:`::valueOf()` and `::canAdvance([bool])`', () => {
         it('inventory - check', () => {
-          const range = Crunchtask.rangeCheck(1, 2, true);
+          const range = Crunch.rangeCheck(1, 2, true);
 
           expect(range.valueOf).to.exist;
           expect(typeof range.valueOf).to.equal('function')
@@ -106,7 +106,7 @@ describe('Core', function () {
     });
   });
 
-  describe('Crunchtask instance methods', () => {
+  describe('Crunch instance methods', () => {
 
     let task;
 
@@ -126,7 +126,7 @@ describe('Core', function () {
     ];
 
     beforeEach(() => {
-      const generator = () => new Crunchtask(defaultDescriptionFn);
+      const generator = () => new Crunch(defaultDescriptionFn);
       expect(generator).to.not.throw(Error);
 
       task = generator();
@@ -158,7 +158,7 @@ describe('Core', function () {
 
   });
 
-  describe('When Crunchtask instance is run, a run-task instance is created. With its properties and methods', () => {
+  describe('When Crunch instance is run, a run-task instance is created. With its properties and methods', () => {
 
     const methods =  [
       'then',
@@ -175,7 +175,7 @@ describe('Core', function () {
     let runTask;
 
     beforeEach(() => {
-      const generator = () => (new Crunchtask(defaultDescriptionFn))();
+      const generator = () => (new Crunch(defaultDescriptionFn))();
       runTask = generator();
     });
 
@@ -201,7 +201,7 @@ describe('Core', function () {
         body((rs) => { rs(); });
         fin(() => {});
       };
-      const generator = () => new Crunchtask(descriptionFn);
+      const generator = () => new Crunch(descriptionFn);
 
       const task = generator();
 
@@ -225,7 +225,7 @@ describe('Core', function () {
 
     it('Failure to do so causes error when the instance gets executed. The error is generated on a new stack.', (done) => {
 
-      const generator = () => new Crunchtask();
+      const generator = () => new Crunch();
       const task = generator();
 
       const onErrorSpy = chai.spy(function () {
@@ -259,7 +259,7 @@ describe('Core', function () {
         });
         fin(() => {});
       };
-      const generator = () => new Crunchtask(descriptionFn);
+      const generator = () => new Crunch(descriptionFn);
       const task = generator();
 
       const runInstance = task(1);
@@ -279,7 +279,7 @@ describe('Core', function () {
       };
       const descriptionFnSpy = chai.spy(descriptionFn);
 
-      const generator = () => new Crunchtask(descriptionFnSpy);
+      const generator = () => new Crunch(descriptionFnSpy);
 
       const task = generator();
 
@@ -307,12 +307,12 @@ describe('Core', function () {
     let collatzTask = null;
 
     beforeEach(() => {
-      Crunchtask.config({
+      Crunch.config({
         // trace: true,
         debug: true
       });
 
-      collatzTask = new Crunchtask(((init, body, fin) => {
+      collatzTask = new Crunch(((init, body, fin) => {
         let nInit = null,
           n  = null,
           threshold = null,
@@ -353,7 +353,7 @@ describe('Core', function () {
       }
       collatzTask = null;
 
-      Crunchtask.config();
+      Crunch.config();
     });
 
     it('Collatz conjecture, aka 3n + 1 problem, algorithm', (done) => {

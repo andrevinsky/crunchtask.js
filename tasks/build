@@ -16,6 +16,7 @@ module.exports = function(options) {
   return new Promise(function(resolve, reject) {
 
     rollup.rollup({
+      
       // The bundle's starting point. This file will be
       // included, along with the minimum necessary code
       // from its dependencies
@@ -36,14 +37,14 @@ module.exports = function(options) {
           // presets: ['es2015-rollup'],
           plugins: ['transform-es2015-modules-umd']
         }
-      ).code
+      ).code;
 
       mkdirp('./dist', function() {
-        fs.writeFileSync(`./dist/${ global.library }.js`, result, 'utf8')
-        resolve()
-      })
+        fs.writeFileSync(`./dist/${ global.library }.js`, result, 'utf8');
+        resolve();
+      });
 
     }).catch(e =>{ utils.print(e, 'error') })
   })
 
-}
+};

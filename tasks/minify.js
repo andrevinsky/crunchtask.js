@@ -1,6 +1,7 @@
 var utils = require('./_utils'),
   fs = require('fs'),
-  uglify = require('uglify-js')
+  uglify = require('uglify-js'),
+  srcMap = require('source-map');
 
 module.exports = function(options) {
 
@@ -11,7 +12,12 @@ module.exports = function(options) {
 
   var sourcePath = `${options.base}${global.library}.js`,
     outputPath = `${options.base}${global.library}.min.js`,
-    output = uglify.minify(sourcePath)
+    sourceOutputPath = `${options.base}${global.library}.min.js.map`,
+
+    output = uglify.minify(sourcePath, {
+      outSourceMap: sourceOutputPath,
+      root: `${options.base}`
+    });
 
   /**
    * Create a promise based on the result of the uglify output
@@ -25,9 +31,16 @@ module.exports = function(options) {
       } else {
         utils.print('Library minified', 'confirm')
         utils.print(`Created file: ${outputPath}`, 'cool')
-        resolve()
+        // resolve()
       }
-    })
+    });
+    fs.writeFile(sourceOutputPath, output.map, function(err){ {
+      if (err) {
+
+      } else {
+        resolve();
+      }
+    }})
   })
 
 }
