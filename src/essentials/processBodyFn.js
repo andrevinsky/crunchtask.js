@@ -18,22 +18,23 @@ export function processBodyFn(instanceApi, isFirstTime) {
     console.log('isFirstTime', isFirstTime);
     console.log('this.timeoutAmount', this.timeoutAmount); // jshint ignore:line
   }
+
   defer.call(this, isFirstTime ? 0 : this.timeoutAmount, function (instanceApi) { // jshint ignore:line
 
     if (config.trace) {
       console.log('inside proceedBodyFn:defer', this.id, new Date() - 0);
     }
 
-    var task = this.task,
+    const task = this.task,
       needRepeat = this.needRepeat,
       timeLimit = type.isNumber(needRepeat) ? needRepeat : 0;
 
-    var timerBatchStart,
+    let timerBatchStart,
       timerStart,
       miniRunCount = 0,
       timerElapsed = 0;
 
-    var canExecuteNextLoop = (this.state === C.STATE_NAMES.running) && !task.isPaused && !task.isAborted,
+    let canExecuteNextLoop = (this.state === C.STATE_NAMES.running) && !task.isPaused && !task.isAborted,
       canRepeatThisLoop,
       canQueueNextBatch;
 
@@ -54,7 +55,7 @@ export function processBodyFn(instanceApi, isFirstTime) {
           if (config.debug) {
             console.log(ex + ', stack: ' + ex.stack);
           }
-          instanceApi.signalError('body', ex);
+          instanceApi.signalError(C.ERROR_CODES.TASK_BODY_INSIDE, ex);
         }
 
         timerElapsed += (new Date() - timerStart);
@@ -84,7 +85,7 @@ export function processBodyFn(instanceApi, isFirstTime) {
     }
 
     if (this.finallyFn && !this.finallyFn.call(this, C.VERBOSE_STATES[this.state])) {
-      instanceApi.signalError('CrunchTask.description.fin', this.status);
+      instanceApi.signalError(C.ERROR_CODES.TASK_FIN_INSIDE, this.status);
     }
 
   }, [instanceApi]);

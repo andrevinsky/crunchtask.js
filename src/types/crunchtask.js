@@ -2,14 +2,8 @@
  * Created by andrew on 4/23/16.
  */
 import * as C from '../constants/index';
-import nextUid from '../utils/nextUid';
-import type from '../utils/type';
-// import together from './utils/together';
-import partial from '../utils/partial';
+
 import globals from '../essentials/globals';
-import defer from '../utils/defer';
-
-
 import { getExecutableFor } from '../essentials/executables';
 import { bindEventServer } from '../essentials/events';
 import { config, defaultConfig } from '../essentials/config';
@@ -18,6 +12,10 @@ import { processDescriptionFn } from '../essentials/processDescriptionFn';
 
 import * as S from '../static/index';
 
+import defer from '../utils/defer';
+import nextUid from '../utils/nextUid';
+import type from '../utils/type';
+import partial from '../utils/partial';
 
 class CrunchInstancePromise {
   constructor(fn) {
@@ -67,6 +65,7 @@ class CrunchInstance extends CrunchInstancePromise {
 
     });
 
+    // processDescriptionFn.call(runCtx, instanceApi);
     defer.call(runCtx, 0, processDescriptionFn, [instanceApi] );
   }
 }
@@ -85,12 +84,13 @@ class CrunchExec {
 
 
 class Crunch extends CrunchExec {
-  constructor(descriptionFn) {
+  constructor(descriptionFn, token) {
 
     const ctx = {
       id: nextUid(),
       timestamp: new Date() - 0,
-      runCount: 0
+      runCount: 0,
+      token
     };
 
     super(ctx, descriptionFn);
@@ -121,9 +121,6 @@ class Crunch extends CrunchExec {
         stack = ex.stack;
       }
     }
-
-
-
 
     const events = ctx.events;
     delete ctx.events;

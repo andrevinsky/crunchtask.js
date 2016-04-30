@@ -126,7 +126,7 @@ describe('Core', function () {
     ];
 
     beforeEach(() => {
-      const generator = () => new Crunch(defaultDescriptionFn);
+      const generator = () => new Crunch(defaultDescriptionFn, 'Crunch instance methods');
       expect(generator).to.not.throw(Error);
 
       task = generator();
@@ -175,7 +175,7 @@ describe('Core', function () {
     let runTask;
 
     beforeEach(() => {
-      const generator = () => (new Crunch(defaultDescriptionFn))();
+      const generator = () => (new Crunch(defaultDescriptionFn, 'run-task instance is created'))();
       runTask = generator();
     });
 
@@ -201,7 +201,7 @@ describe('Core', function () {
         body((rs) => { rs(); });
         fin(() => {});
       };
-      const generator = () => new Crunch(descriptionFn);
+      const generator = () => new Crunch(descriptionFn, 'Define a task');
 
       const task = generator();
 
@@ -219,30 +219,41 @@ describe('Core', function () {
 
       //
       //
-      expect(onErrorSpy).to.have.not.been.called.with('CrunchTask.description.empty');
+      expect(onErrorSpy).to.have.not.been.called();
 
     });
 
     it('Failure to do so causes error when the instance gets executed. The error is generated on a new stack.', (done) => {
 
-      const generator = () => new Crunch();
+      const generator = () => new Crunch(null, 'Failure to do so');
       const task = generator();
 
-      const onErrorSpy = chai.spy(function () {
+      const onErrorSpy = chai.spy(function (arg) {
+        // console.log(arg);
+      });
+
+      const onErrorSpy2 = chai.spy(function (arg) {
+        // console.log(arg);
       });
 
       expect(onErrorSpy).to.be.spy;
+      expect(onErrorSpy2).to.be.spy;
 
       task.onError(onErrorSpy);
 
       setTimeout(function() {
-        expect(onErrorSpy).to.have.been.called.with('CrunchTask.description.empty');
+        expect(onErrorSpy).to.have.been.called.with('DESCRIPTION_FN_MISS');
+        expect(onErrorSpy2).to.have.been.called();
         done();
-      }, 10);
+      }, 1000);
 
-      task();
+      expect(onErrorSpy).to.have.not.been.called();
+      expect(onErrorSpy2).to.have.not.been.called();
 
-      expect(onErrorSpy).to.have.not.been.called.with('CrunchTask.description.empty');
+      task().catch(onErrorSpy2);
+
+      expect(onErrorSpy).to.not.have.been.called();
+      expect(onErrorSpy2).to.not.have.been.called();
 
     });
 
@@ -271,12 +282,13 @@ describe('Core', function () {
       });
     });
 
-    it('It (the function) gets executed only when the task is run and on the same stack.', (done) => {
+    it('It (the description function) gets executed only when the task is run. It happens after the current stack is freed.', (done) => {
       const descriptionFn = (init, body, fin) => {
         init(() => {});
         body((rs) => { rs(); });
         fin(() => {});
       };
+
       const descriptionFnSpy = chai.spy(descriptionFn);
 
       const generator = () => new Crunch(descriptionFnSpy);
@@ -289,13 +301,12 @@ describe('Core', function () {
 
       task();
 
-      expect(descriptionFnSpy).to.have.been.called();
+      expect(descriptionFnSpy).to.not.have.been.called();
 
       setTimeout(function() {
         expect(descriptionFnSpy).to.have.been.called();
         done();
-      }, 10);
-
+      }, 500);
 
     });
 

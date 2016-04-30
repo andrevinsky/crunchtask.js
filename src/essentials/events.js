@@ -7,12 +7,12 @@ import type from '../utils/type';
 
 /**
  * Subscribes a handler `fn(args..)` to a comma-separated event list. Events are scoped by the object `hive`
- * @param hive {}
- * @param evt ''
- * @param fn*
- * @param [args]
+ * @param {Object} hive
+ * @param {string} evt
+ * @param {function} fn
+ * @param {*[]} [args]
  */
-function _on(hive, evt, fn, ...args) {
+function on(hive, evt, fn, ...args) {
   if (!fn && !type.isFunction(fn)) {
     return;
   }
@@ -33,24 +33,26 @@ function _on(hive, evt, fn, ...args) {
 
 /**
  * Executes all subscribers for `evt` event, scoped by the `hive` object with the supplied arguments
- * @param hive
- * @param evt
- * @params {...*} args1
+ * @param {Object} hive
+ * @param {string} evt
+ * @params {*[]} [args]
  */
-function _trigger(hive, evt, ...args1) {
-  // var args1 = __slice.call(arguments, 2);
+function trigger(hive, evt, ...args) {
+
   if (!hive[evt]) {
     return;
   }
+
   const handlers = hive[evt];
-  for (let handler, args0, i = 0, maxI = handlers.length; i < maxI; i++) {
-    handler = handlers[i][0];
-    args0 = handlers[i][1];
+  for (let i = 0, maxI = handlers.length; i < maxI; i++) {
+    let [handler, args0] = handlers[i];
+
     if (!handler) {
       continue;
     }
+
     try {
-      handler.apply(this, [].concat(args0, args1)); // jshint ignore:line
+      handler.apply(this, [].concat(args0, args)); // jshint ignore:line
     } catch (e) {
       if (config.debug) {
         console.log(e + ', stack: ' + e.stack);
@@ -61,13 +63,13 @@ function _trigger(hive, evt, ...args1) {
 
 /**
  *
- * @param ctx {{}}
- * @param _obj {{}}
+ * @param {Object} ctx
+ * @param {Object} hive
  * @returns {{on: {Function}, trigger: {Function}}}
  */
-export function bindEventServer(ctx, obj = {}) {
+export function bindEventServer(ctx, hive = {}) {
   return {
-    on     : _on.bind(ctx, obj),
-    trigger: _trigger.bind(ctx, obj)
+    on     : on.bind(ctx, hive),
+    trigger: trigger.bind(ctx, hive)
   };
 }

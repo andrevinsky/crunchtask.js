@@ -41,3 +41,24 @@ export const SETTLED_STATES = {
   [STATE_NAMES.rejected]: true,
   [STATE_NAMES.aborted]: true
 };
+
+export const ERROR_CODES = {
+  DESCRIPTION_FN_MISS: 'DESCRIPTION_FN_MISS',
+  DESCRIPTION_INSIDE: 'DESCRIPTION_INSIDE',
+  DESCRIPTION_INIT_FN_MISS: 'DESCRIPTION_INIT_FN_MISS',
+  TASK_INIT_INSIDE: 'TASK_INIT_INSIDE',
+  TASK_BODY_INSIDE: 'TASK_BODY_INSIDE',
+  TASK_FIN_INSIDE: 'TASK_FIN_INSIDE',
+  DESCRIPTION_BODY_FN_MISS: 'DESCRIPTION_BODY_FN_MISS',
+  DESCRIPTION_BODY_REPEAT_WRONG: 'DESCRIPTION_BODY_REPEAT_WRONG',
+  DESCRIPTION_BODY_TIMEOUT_WRONG: 'DESCRIPTION_BODY_TIMEOUT_WRONG',
+  DESCRIPTION_FIN_FN_MISS: 'DESCRIPTION_FIN_FN_MISS'
+};
+
+export const ERROR_MESSAGES = {
+  [ERROR_CODES.DESCRIPTION_INIT_FN_MISS]: 'Init setup expects an optional parameter of type function only.',
+  [ERROR_CODES.DESCRIPTION_BODY_FN_MISS]: 'Body setup expects a function as the first optional arg.',
+  [ERROR_CODES.DESCRIPTION_BODY_REPEAT_WRONG]: 'Body setup expects a number or false as the second optional arg.',
+  [ERROR_CODES.DESCRIPTION_BODY_TIMEOUT_WRONG]: 'Body setup expects a number as the 3rd optional arg.',
+  [ERROR_CODES.DESCRIPTION_FIN_FN_MISS]: 'Fin setup expects a function as a first optional arg.'
+};

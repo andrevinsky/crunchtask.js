@@ -2,10 +2,9 @@
  * Created by andrew on 4/21/16.
  */
 import type from './type';
+import __slice from './slice';
 import globals from './../essentials/globals';
 import { config } from '../essentials/config';
-
-const __slice = [].slice;
 
 /**
  *

@@ -12,12 +12,15 @@ class Range {
     const [ data ] = args;
     this.data = translateRangeArgs(parseRangeArgs(data));
   }
+  
   toString() {
     return verbose.apply(this);
   }
+  
   valueOf() {
     return verbose.apply(this);
   }
+  
   canAdvance(justCheck) {
     var currentR = 0,
       ranges = this.data,
@@ -50,10 +53,11 @@ class Range {
 
 function map(arr, fn) {
   const result = new Array(arr.length);
+  
   for (let i = 0, maxI = arr.length; i < maxI; i++) {
     result[i] = fn(arr[i], i);
-    // result.push(fn(arr[i], i));
   }
+  
   return result;
 }
 

@@ -1,13 +1,14 @@
 /**
  * Created by andrew on 4/22/16.
  */
-import safe from '../utils/safe';
-import defer from '../utils/defer';
+import * as C from '../constants/index';
 
 import { config } from './config';
-
-import * as C from '../constants/index';
+import globals from './globals';
 import { processBodyFn } from './processBodyFn';
+
+import safe from '../utils/safe';
+import defer from '../utils/defer';
 
 export function processDescriptionFn(instanceApi) {
   const ctx = this, // jshint ignore:line
@@ -15,7 +16,7 @@ export function processDescriptionFn(instanceApi) {
     descriptionFn = ctx.descriptionFn;
 
   if (!descriptionFn) {
-    return instanceApi.signalError('CrunchTask.description.empty', 'Description function is empty. Ctx:' + JSON.stringify(ctx));
+    return instanceApi.signalError(C.ERROR_CODES.DESCRIPTION_FN_MISS, 'Description function is empty. Ctx:' + JSON.stringify(ctx));
   }
 
   if (config.trace) {
@@ -25,7 +26,8 @@ export function processDescriptionFn(instanceApi) {
   if (safe(thisTask, descriptionFn)(
       instanceApi.setupInit,
       instanceApi.setupBody,
-      instanceApi.setupFin) &&
+      instanceApi.setupFin
+    ) &&
     (!C.SETTLED_STATES[ctx.state]) &&
     (ctx.conditionsToMeet === 0)) {
 
@@ -33,11 +35,12 @@ export function processDescriptionFn(instanceApi) {
       console.log('after descriptionFn run', new Date() - 0);
     }
 
-    var _needRepeat = ctx.needRepeat;
-    _needRepeat = ((_needRepeat === false) ? _needRepeat
-      : ((_needRepeat === 0) ? _needRepeat : _needRepeat || config.timeLimit));
+    let needRepeat = ctx.needRepeat;
 
-    ctx.needRepeat = (_needRepeat === 0) ? true : _needRepeat;
+    needRepeat = ((needRepeat === false) ? needRepeat
+      : ((needRepeat === 0) ? needRepeat : needRepeat || config.timeLimit));
+
+    ctx.needRepeat = (needRepeat === 0) ? true : needRepeat;
     ctx.timeoutAmount = ctx.timeoutAmount || config.timeoutAmount;
 
     if (config.trace) {
@@ -59,18 +62,23 @@ export function processDescriptionFn(instanceApi) {
       }
 
       if (this.initFn && !this.initFn.apply(this, this.runArgs)) {
-        instanceApi.signalError('CrunchTask.description.init');
+        instanceApi.signalError(C.ERROR_CODES.TASK_INIT_INSIDE);
       }
+
       if (config.trace) {
         console.log('before  proceedBodyFn', new Date() - 0);
       }
+
       processBodyFn.call(this, instanceApi, true);
 
     });
 
   } else {
+
+    const error = globals.staticLastSafeError;
+    delete globals.staticLastSafeError;
     // bad outcome, reject
-    return instanceApi.signalError('CrunchTask.description.else', '');
+    return instanceApi.signalError(C.ERROR_CODES.DESCRIPTION_INSIDE, error.message);
   }
 
 }

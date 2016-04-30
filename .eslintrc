@@ -65,8 +65,8 @@ rules:
   no-unreachable: 2          # disallow unreachable statements after a return, throw, continue,
                  #    or break statement
   use-isnan: 2               # disallow comparisons with the value NaN
-  valid-jsdoc:               # ensure JSDoc comments are valid
-    [1, { "prefer": { "return": "returns" }, "requireReturn": false }]
+#  valid-jsdoc:               # ensure JSDoc comments are valid
+#    [1, { "prefer": { "return": "returns" }, "requireReturn": false }]
   valid-typeof: 2            # ensure that the results of typeof are compared against a
                  #    valid string
 
