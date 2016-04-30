@@ -594,7 +594,7 @@
           canQueueNextBatch = void 0;
 
       if (canExecuteNextLoop) {
-        timerBatchStart = new Date();
+        timerBatchStart = new Date() - 0;
         do {
 
           try {

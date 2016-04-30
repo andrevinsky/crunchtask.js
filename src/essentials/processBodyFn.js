@@ -39,7 +39,7 @@ export function processBodyFn(instanceApi, isFirstTime) {
       canQueueNextBatch;
 
     if (canExecuteNextLoop) {
-      timerBatchStart = new Date();
+      timerBatchStart = new Date() - 0;
       do {
 
         try {

@@ -258,18 +258,23 @@ describe('Core', function () {
     });
 
     it('It (the function) describes the task\'s initialization, body, and finalization.', (done) => {
+
       const descriptionFn = (init, body, fin) => {
         let localVar, i;
         init((actualVal) => { localVar = actualVal; i = 10; });
-        body((rs) => {
+        body((rs, rj, progress, diag) => {
+
+          console.log(diag);
           if (i--) {
             localVar += localVar;
           } else {
             rs(localVar);
           }
         });
+        
         fin(() => {});
       };
+
       const generator = () => new Crunch(descriptionFn);
       const task = generator();
 
@@ -280,9 +285,10 @@ describe('Core', function () {
         expect(arg1).to.equal(1024);
         done();
       });
+
     });
 
-    it('It (the description function) gets executed only when the task is run. It happens after the current stack is freed.', (done) => {
+    it('It (the function) gets executed only when the task is run. It happens after the current stack is freed.', (done) => {
       const descriptionFn = (init, body, fin) => {
         init(() => {});
         body((rs) => { rs(); });
