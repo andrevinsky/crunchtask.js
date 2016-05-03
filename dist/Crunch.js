@@ -566,82 +566,103 @@
     }
   };
 
-  function processBodyFn(instanceApi, isFirstTime) {
-    if (config.trace) {
+  var doTrace$1 = config.trace;
 
+  function processBodyFn(instanceApi, isFirstTime) {
+    if (doTrace$1) {
       console.log('inside proceedBodyFn', this.id, new Date() - 0);
       console.log('isFirstTime', isFirstTime);
       console.log('this.timeoutAmount', this.timeoutAmount);
     }
 
-    defer.call(this, isFirstTime ? 0 : this.timeoutAmount, function (instanceApi) {
+    if (isFirstTime) {
+      this.taskStarted = new Date() - 0;
+    }
 
-      if (config.trace) {
-        console.log('inside proceedBodyFn:defer', this.id, new Date() - 0);
-      }
-
-      var task = this.task,
-          needRepeat = this.needRepeat,
-          timeLimit = result.isNumber(needRepeat) ? needRepeat : 0;
-
-      var timerBatchStart = void 0,
-          timerStart = void 0,
-          miniRunCount = 0,
-          timerElapsed = 0;
-
-      var canExecuteNextLoop = this.state === STATE_NAMES.running && !task.isPaused && !task.isAborted,
-          canRepeatThisLoop = void 0,
-          canQueueNextBatch = void 0;
-
-      if (canExecuteNextLoop) {
-        timerBatchStart = new Date() - 0;
-        do {
-
-          try {
-            timerStart = new Date();
-            this.bodyFn(instanceApi.resolve, instanceApi.reject, instanceApi.sendNotify, {
-              batchStarted: timerBatchStart,
-              batchIndex: miniRunCount,
-              batchElapsed: timerElapsed,
-              runBlock: this.runBlock
-            });
-          } catch (ex) {
-            if (config.debug) {
-              console.log(ex + ', stack: ' + ex.stack);
-            }
-            instanceApi.signalError(ERROR_CODES.TASK_BODY_INSIDE, ex);
-          }
-
-          timerElapsed += new Date() - timerStart;
-          miniRunCount++;
-
-          canRepeatThisLoop = needRepeat && timeLimit !== 0 && timerElapsed < timeLimit && this.state === STATE_NAMES.running;
-        } while (canRepeatThisLoop);
-      } else if (task.isAborted || this.state === STATE_NAMES.aborted) {
-        instanceApi.reject('aborted');
-      }
-
-      canQueueNextBatch = needRepeat && NEED_REPEAT_STATES[this.state] && !task.isAborted;
-
-      if (canQueueNextBatch) {
-        this.runBlock++;
-        if (config.trace) {
-          console.log('rescheduling proceedBodyFn', this.id, new Date() - 0);
-        }
-        return processBodyFn.call(this, instanceApi);
-      }
-
-      if (needRepeat === false) {
-        instanceApi.resolve();
-      }
-
-      if (this.finallyFn && !this.finallyFn.call(this, VERBOSE_STATES[this.state])) {
-        instanceApi.signalError(ERROR_CODES.TASK_FIN_INSIDE, this.status);
-      }
-    }, [instanceApi]);
+    defer.call(this, isFirstTime ? 0 : this.timeoutAmount, bodyWorker, [instanceApi]);
   }
 
+  function bodyWorker(instanceApi) {
+
+    if (doTrace$1) {
+      console.log('inside proceedBodyFn:defer', this.id, new Date() - 0);
+    }
+
+    var task = this.task,
+        needRepeat = this.needRepeat,
+        timeLimit = result.isNumber(needRepeat) ? needRepeat : 0;
+
+    var timerBatchStart = void 0,
+        timerStart = void 0,
+        miniRunCount = 0,
+        timerElapsed = 0;
+
+    var canExecuteNextLoop = this.state === STATE_NAMES.running && !task.isPaused && !task.isAborted,
+        canRepeatThisLoop = void 0,
+        canQueueNextBatch = void 0;
+
+    if (canExecuteNextLoop) {
+      timerBatchStart = new Date() - 0;
+      do {
+        var _diags = {
+          batchStarted: timerBatchStart,
+          batchIndex: miniRunCount,
+          batchElapsed: timerElapsed,
+          runBlock: this.runBlock
+        };
+
+        try {
+
+          timerStart = new Date();
+          this.bodyFn(instanceApi.resolve, instanceApi.reject, instanceApi.sendNotify, _diags);
+        } catch (ex) {
+
+          if (config.debug) {
+            console.log(ex + ', stack: ' + ex.stack);
+          }
+          instanceApi.signalError(ERROR_CODES.TASK_BODY_INSIDE, ex);
+        }
+
+        timerElapsed += new Date() - timerStart;
+        miniRunCount++;
+
+        canRepeatThisLoop = needRepeat && timeLimit !== 0 && timerElapsed < timeLimit && this.state === STATE_NAMES.running;
+      } while (canRepeatThisLoop);
+    } else if (task.isAborted || this.state === STATE_NAMES.aborted) {
+      instanceApi.reject('aborted');
+    }
+
+    canQueueNextBatch = needRepeat && NEED_REPEAT_STATES[this.state] && !task.isAborted;
+
+    if (canQueueNextBatch) {
+      this.runBlock++;
+
+      if (doTrace$1) {
+        console.log('rescheduling proceedBodyFn', this.id, new Date() - 0);
+      }
+
+      return processBodyFn.call(this, instanceApi);
+    }
+
+    if (needRepeat === false) {
+      instanceApi.resolve();
+    }
+
+    var diags = {
+      taskStarted: this.taskStarted,
+      timeElapsed: new Date() - this.taskStarted,
+      batchesElapsed: this.runBlock
+    };
+
+    if (this.finallyFn && !this.finallyFn.call(this, VERBOSE_STATES[this.state], this.runArgs, diags)) {
+      instanceApi.signalError(ERROR_CODES.TASK_FIN_INSIDE, this.status);
+    }
+  }
+
+  var doTrace = config.trace;
+
   function processDescriptionFn(instanceApi) {
+
     var ctx = this,
         thisTask = ctx.task,
         descriptionFn = ctx.descriptionFn;
@@ -650,50 +671,44 @@
       return instanceApi.signalError(ERROR_CODES.DESCRIPTION_FN_MISS, 'Description function is empty. Ctx:' + JSON.stringify(ctx));
     }
 
-    if (config.trace) {
+    if (doTrace) {
       console.log('before descriptionFn run', new Date() - 0);
     }
 
     if (safe(thisTask, descriptionFn)(instanceApi.setupInit, instanceApi.setupBody, instanceApi.setupFin) && !SETTLED_STATES[ctx.state] && ctx.conditionsToMeet === 0) {
 
-      if (config.trace) {
+      if (doTrace) {
         console.log('after descriptionFn run', new Date() - 0);
       }
 
       var needRepeat = ctx.needRepeat;
+
 
       needRepeat = needRepeat === false ? needRepeat : needRepeat === 0 ? needRepeat : needRepeat || config.timeLimit;
 
       ctx.needRepeat = needRepeat === 0 ? true : needRepeat;
       ctx.timeoutAmount = ctx.timeoutAmount || config.timeoutAmount;
 
-      if (config.trace) {
+      if (doTrace) {
         console.log('collected `needRepeat`:', ctx.needRepeat);
         console.log('collected `timeoutAmount`:', ctx.timeoutAmount);
       }
 
       instanceApi.goRunning();
 
-      if (config.trace) {
-        console.log('before deferred Init + Body scheduler', new Date() - 0);
+      if (doTrace) {
+        console.log('before Init', new Date() - 0);
       }
 
-      defer.call(ctx, 0, function () {
+      if (this.initFn && !this.initFn.apply(this, this.runArgs)) {
+        instanceApi.signalError(ERROR_CODES.TASK_INIT_INSIDE);
+      }
 
-        if (config.trace) {
-          console.log('inside deferred Init + Body scheduler. With args:', new Date() - 0, this.runArgs.join());
-        }
+      if (doTrace) {
+        console.log('after Init +..', 'before processBodyFn', new Date() - 0);
+      }
 
-        if (this.initFn && !this.initFn.apply(this, this.runArgs)) {
-          instanceApi.signalError(ERROR_CODES.TASK_INIT_INSIDE);
-        }
-
-        if (config.trace) {
-          console.log('before  proceedBodyFn', new Date() - 0);
-        }
-
-        processBodyFn.call(this, instanceApi, true);
-      });
+      processBodyFn.call(this, instanceApi, true);
     } else {
 
       var _error = globals.staticLastSafeError;

@@ -8,9 +8,12 @@ import globals from './globals';
 import { processBodyFn } from './processBodyFn';
 
 import safe from '../utils/safe';
-import defer from '../utils/defer';
+// import defer from '../utils/defer';
+
+const doTrace = config.trace;
 
 export function processDescriptionFn(instanceApi) {
+  
   const ctx = this, // jshint ignore:line
     thisTask = ctx.task,
     descriptionFn = ctx.descriptionFn;
@@ -19,7 +22,7 @@ export function processDescriptionFn(instanceApi) {
     return instanceApi.signalError(C.ERROR_CODES.DESCRIPTION_FN_MISS, 'Description function is empty. Ctx:' + JSON.stringify(ctx));
   }
 
-  if (config.trace) {
+  if (doTrace) {
     console.log('before descriptionFn run', new Date() - 0);
   }
 
@@ -31,11 +34,11 @@ export function processDescriptionFn(instanceApi) {
     (!C.SETTLED_STATES[ctx.state]) &&
     (ctx.conditionsToMeet === 0)) {
 
-    if (config.trace) {
+    if (doTrace) {
       console.log('after descriptionFn run', new Date() - 0);
     }
 
-    let needRepeat = ctx.needRepeat;
+    let { needRepeat } = ctx;
 
     needRepeat = ((needRepeat === false) ? needRepeat
       : ((needRepeat === 0) ? needRepeat : needRepeat || config.timeLimit));
@@ -43,35 +46,28 @@ export function processDescriptionFn(instanceApi) {
     ctx.needRepeat = (needRepeat === 0) ? true : needRepeat;
     ctx.timeoutAmount = ctx.timeoutAmount || config.timeoutAmount;
 
-    if (config.trace) {
+    if (doTrace) {
       console.log('collected `needRepeat`:', ctx.needRepeat);
       console.log('collected `timeoutAmount`:', ctx.timeoutAmount);
     }
 
     instanceApi.goRunning();
 
-    if (config.trace) {
-      console.log('before deferred Init + Body scheduler', new Date() - 0);
+    if (doTrace) {
+      console.log('before Init', new Date() - 0);
+    }
+    
+    if (this.initFn && !this.initFn.apply(this, this.runArgs)) {
+      instanceApi.signalError(C.ERROR_CODES.TASK_INIT_INSIDE);
+    }
+    
+    if (doTrace) {
+      console.log('after Init +..',
+        'before processBodyFn', new Date() - 0);
     }
 
-    // schedule init, body, fin, etc.
-    defer.call(ctx, 0, function () {
+    processBodyFn.call(this, instanceApi, true);
 
-      if (config.trace) {
-        console.log('inside deferred Init + Body scheduler. With args:', new Date() - 0, this.runArgs.join());
-      }
-
-      if (this.initFn && !this.initFn.apply(this, this.runArgs)) {
-        instanceApi.signalError(C.ERROR_CODES.TASK_INIT_INSIDE);
-      }
-
-      if (config.trace) {
-        console.log('before  proceedBodyFn', new Date() - 0);
-      }
-
-      processBodyFn.call(this, instanceApi, true);
-
-    });
 
   } else {
 

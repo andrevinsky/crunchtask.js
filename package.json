@@ -1,7 +1,7 @@
 {
   "name": "Crunch",
-  "version": "1.0.0",
-  "description": "A library that executes long-running tasks without freezing a machine and employing an easy-to-use pattern",
+  "version": "2.0.0",
+  "description": "A library that executes long-running tasks without freezing a machine and by employing an easy-to-use pattern",
   "main": "dist/crunch.js",
   "scripts": {
     "test": "node make test",

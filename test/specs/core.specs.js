@@ -260,23 +260,25 @@ describe('Core', function () {
     it('It (the function) describes the task\'s initialization, body, and finalization.', (done) => {
 
       const descriptionFn = (init, body, fin) => {
-        let localVar, i;
+        let localVar, i, diags = [];
         init((actualVal) => { localVar = actualVal; i = 10; });
         body((rs, rj, progress, diag) => {
-
-          console.log(diag);
+          diags.push(diag);
           if (i--) {
             localVar += localVar;
           } else {
             rs(localVar);
           }
         });
-        
-        fin(() => {});
+
+        fin(() => {
+          // console.log(diags);
+        });
       };
 
       const generator = () => new Crunch(descriptionFn);
       const task = generator();
+      task.onIdle(done);
 
       const runInstance = task(1);
 
@@ -355,10 +357,11 @@ describe('Core', function () {
           totalStoppingTime++
         }, 100);
 
-        fin((status) => {
+        fin((status, runArgs, diags) => {
           if (!status) {
             console.log(`Collatz conjecture breaking candidate: ${nInit}`)
           }
+          console.log(runArgs, diags);
         });
       }));
 
